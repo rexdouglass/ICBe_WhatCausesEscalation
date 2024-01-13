@@ -33,12 +33,11 @@ embed-resources: true
 bibliography: ICBintro.bib
 ---
 
-
-
 ```{python, eval=F}
 !quarto install extension mikemahoney218/quarto-arxiv
 !sudo apt install lmodern
 ```
+
 
 Word Count: 8923
 
@@ -72,6 +71,7 @@ For now, imagine a stylized crisis with two discrete and clearly distinguishable
 We draw prior beliefs from international relations literature about the sign and rank ordering of these weights across behaviors. Much of 20th-century security studies was preoccupied with conventional warfare as the most extreme behavior, e.g. the Correlates of War (COW) project. In the shadow of possible nuclear war, scholars turned to measuring events that might be a precursor to actual fighting, e.g. the threat, display, or use of military force short of war recorded by the Militarized Interstate Disputes (MIDs) dataset (Maoz, et al. 2019). Others recorded entire streams of events from news headlines (McClelland 1978; Goldstein 1992; Azar 1993; Sherman 1994) and defined their level of departure from stability by hand, e.g. Goldstein scores (Goldstein 1992), or through unsupervised dimensionality reduction, e.g. Item Response Scores (Schrodt 2007). The ICB project took an even wider view, recording a “trigger” for each crisis which could take one of 9 different forms (verbal act, political act, economic act, external change, other non-violent act, internal verbal or physical challenge to regime or elite, non-violent military act, indirect violent act, or violent act). 
 
 The ICBe ontology divided crisis events into two conceptual categories across armed actors vs unarmed actors and, given that, escalatory/uncooperative vs de-escalatory/cooperative behavior, shown in the table below. It further recorded details related to scale and severity, like the number of troops involved in an act, number of casualties, amount of territory exchanged, etc. The labels of escalatory/de-escalatory were perhaps premature, and instead for our purposes here we argue these are better thought of as indicators for and against a state of crisis/stability within a single discrete time step.
+
 
 ```{r, eval=T, output=F}
 
@@ -196,6 +196,7 @@ bind_cols(df1,df2,df3,df4) %>%
 
 ```
 
+
 #2.3 Defining Escalation/De-escalation
 
 We take exactly one time step back in our stylized crisis to $t−1$ and define what it means for a behavior to be escalatory or de-escalatory. For simplicity, we assume the player is already in a state of crisis at $t−1$, and so the only transition probabilities we are interested in are from crisis to crisis, $P(C\rightarrow C)$, and from crisis to stability $P(C\rightarrow S)$. Because the two outcomes are mutually exclusive, we can further consider just a single transition, and so we choose $P(C\rightarrow C)$, the probability of crisis being followed by more crisis. As before, we can think of all of the same behaviors, $b_{p^-1,t}$, simply observed one time step earlier, and we can assign another weight vector $\beta=1,2,..,n$, and specify some function that maps the last period’s behaviors to the next period’s probability of being in a state of crisis $\Theta_{p,t} = F(\sum^n_{i=1}\beta_i * b_{t-1,i})$.
@@ -305,11 +306,11 @@ Much remains to be done to untangle relationships and to clarify cause and effec
 
 
 
+
 ```{r, eval=T, cache=F}
 library(tidyverse)
 library(tictoc)
 ```
-
 
 ```{r, eval=T}
 
@@ -335,7 +336,6 @@ qcodes <- bind_rows(
   #mutate(value=value %>% tolower() %>% trimws() )
 
 ```
-
 
 ```{r, eval=T, cache=T}
 
@@ -519,8 +519,6 @@ icbe_llm_long_votes_keep_actors_events_small <- icbe_llm_long_votes_keep_actors_
 
 ```
 
-
-
 ```{r, eval=F}
 
 #This doesn't contain any known not events.
@@ -584,7 +582,6 @@ df_final <- df %>%
 df_final %>% pull(example) %>% writeLines("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_out/icbe_actor_examples.txt")
 
 ```
-
 
 ```{r, eval=T}
 
@@ -664,7 +661,6 @@ dim(yx_all) #931140 #997640    144
               
 ```
 
-
 ```{r, eval=T, fig.width=12, fig.height=14, output=F}
 
 y_all_long %>% filter(Y==1) %>% 
@@ -724,7 +720,6 @@ result <- data.frame(
 )
 
 ```
-
 
 ```{r, eval=T, fig.width=12, fig.height=14, output=T}
 
@@ -800,7 +795,6 @@ temp %>%
   
   
 ```
-
 
 ```{r, eval=T, fig.width=12, fig.height=14, output=F}
 
@@ -904,7 +898,6 @@ mean(sqrt((temp$Y_hat - temp$Y)^2))  #5.324894 #5.371377 #5.375813 #5.496948 #5.
 #mean(sqrt((exp(temp$Y_hat) - exp(temp$Y) )^2)) #6.723754 #5.496948 #5.5 #5.57 #5.63 #5.76 #5.78 #5.8 with poisson #Rmse of 5.96 with bagging. 6 events. 0.01 learning rate faster and same. Higher still faster and same.
 
 ```
-
 
 ```{r, eval=T, fig.width=12, fig.height=14, output=F, cache=F}
 
@@ -1016,8 +1009,6 @@ temp1 %>%
   theme(axis.text.y = element_text( colour = temp2$color_category) )
     
 ```
-
-
 
 ```{r Cuban Missiles, eval=T,output=F}
 
