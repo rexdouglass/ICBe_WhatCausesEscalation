@@ -1,0 +1,40 @@
+---
+title: "Measuring Escalation and Deescalation in International Relations with Human and Machine Generated Event Data"
+authors:
+  - name: Rex W. Douglass
+    affiliation: University of California, San Diego
+  - name: Erik Gartzke
+    affiliation: University of California, San Diego
+  - name: Jon R. Lindsay
+    affiliation: Georgia Institute of Technology
+  - name: J. Andrés Gannon
+    affiliation: Vanderbilt University
+  - name: Thomas Leo Scherer
+    affiliation: University of California, San Diego
+highlight-style: pygments
+format:
+  html: 
+    code-fold: true
+    html-math-method: katex
+editor: source
+execute:
+  output: false
+  error: false
+  echo: false
+  warnings: false
+  cache: false
+embed-resources: true
+bibliography: ICBintro.bib
+---
+
+What is Escalation?:  Measuring Crisis Dynamics in International Relations with Human and Machine Generated Event Data
+Word Count: 8923
+Authors (Affiliations)
+Rex W. Douglass (University of California, San Diego)
+Jon R. Lindsay (Georgia Institute of Technology)
+Erik Gartzke (University of California, San Diego)
+Thomas Leo Scherer (University of California, San Diego)
+J. Andrés Gannon (Vanderbilt University)
+
+Abstract
+When a dangerous international crisis begins, leaders need to know whether their next move is going to resolve the dispute or amplify it out of control. Theories of conflict have mainly served to deepen the confusion, revealing fighting, bargaining, and signaling to be high-dimensional and subtle equilibrium behaviors with deeply contextual consequences. Should a leader communicate resolve through aggressive acts, avoid spirals through accommodation, or focus on ensuring the possibility of a bargain? We offer a data-driven empirical solution to this logjam in the form of a new large-scale analysis of actions taken within 475 crises. We combine two complimentary measurement projects, the human-coded International Crisis Behavior Events (ICBe) dataset and the new machine-coded ICBeLLM. We model directly whether an action tends to shorten or extend the length of a crisis. The result is a directly interpretable measure of the latent escalatory/deescalatory nature of each action leaders have chosen over the last century.
