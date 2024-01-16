@@ -305,6 +305,197 @@ The research design here is purely observational and will require additional str
 
 Much remains to be done to untangle relationships and to clarify cause and effect. Many of the relationships we identify are correlations, not causations. But this may be sufficient if the goal is simply to delineate factors that are associated with de-escalation, rather than making specific causal claims. At the same time, much of our findings suggest that the classical dialectic between deterrence and the spiral model is at best broadly descriptive and has little predictive value. Deterrence may be influencing behavior earlier on before a crisis manifests (i.e., general deterrence). Consistent with other findings in this volume (Beardsley, et al. 2024), we find little evidence in our analysis to support claims that immediate deterrence works as predicted in theory; actors are not de-escalating because an adversary escalated. At least, it is far from clear that this dynamic is in any way modal. Instead, it appears more usual for states to mirror image one another, escalating when the other does so, and vice versa. At the same time, again, these are not causal claims; two (or more) states may be escalating or de-escalating together, not because the other is escalating/de-escalating, but because both states are experiencing similar incentives, circumstances, or conditions. In brief, we have not answered the question that we posed at the outset—what causes escalation? Instead, as we hope we have made clear, existing explanations are far from adequate, while the abductive approach we explore here has much (more) to offer in highlighting relationships that can help to prompt new thinking.
 
+# References
+
+Altfeld, Michael F. 1983. “Arms Races -- and Escalation?: A Comment on Wallace.” *International Studies Quarterly* 27(2), 225-231.
+
+Azar, Edward E. “Conflict and Peace Data Bank (COPDAB), 1948—1978.” *Inter-university Consortium for Political and Social Research (ICPSR)* Codebook #7767. University of Michigan.
+
+Banks, Jeffrey S. 1990. “Equilibrium Behavior in Crisis Bargaining Games.” *American Journal of Political Science*, 599-614.
+
+Beardsley, Kyle, Jonathan Wilkenfeld, Phuong Pham, Corinne DeFrancisci, Diana Partridge, and Megan Rutter. forthcoming. "Deterrence in the Early Stages of Crisis" In Kyle Beardsley, Patrick James, and Jonathan Wilkenfeld (eds.), *A Century of International Crises, 1918-2019*. Ann Arbor: University of Michigan Press.
+
+Beck, Neal, Jonathan Katz and Richard Tucker. 1998. “Taking Time Seriously:  Time-Series—Cross-Section Analysis with a Binary Dependent Variable.” *American Journal of Political Science*. 42(4): 1260—1288. 
+
+Benson, Brett and Bradley C. Smith. 2022.  “Commitment Problems in Alliance Formation.” *American Journal of Political Science* 67(4): 1012—1025.
+
+Benson, Brett. 2012. *Constructing International Security: Alliances, Deterrence and the Moral Hazard*. Cambridge, UK: Cambridge University Press.
+
+Bismarck, Otto von. 2013\[1899\]. *Bismarck: The Man and the Statesman*, vols 1&2. New York: Cosimo Classics.
+
+Bosch, Richard. 2017.  “Conflict Escalation.” *The Oxford Encyclopedia of International Studies*. pp. 1-26. Oxford, UK: Oxford University Press.
+
+Brecher, Michael, and Jonathan Wilkenfeld. 1997. *A Study in Crisis*. Ann Arbor, MI: University of Michigan. 
+
+Brecher, Michael, and Jonathan Wilkenfeld. 1982. "Crises in World Politics." *World Politics* 34(3):380–417.
+
+Brodie, Bernard. 1959. “The Anatomy of Deterrence.” *World Politics* 11(2): 173—191.
+
+Bueno de Mesquita, Bruce, Morrow, James D., Zorick, Ethan. 1997. “Capabilities, Perception and Escalation.” *American Political Science Review* 91(1), 15-27.
+
+Carlson, Lisa J. 1995. “A Theory of Escalation and International Conflict.” *Journal of Conflict Resolution* 39(3), 511-534.
+
+Carter, David B. and Curtis S. Signorino. 2010. “Back to the Future: Modeling Time Dependence in Binary Data.” *Political Analysis* 18(3): 271—292.
+
+Colaresi, Michael P., and William R. Thompson. 2002. “Hot Spots or Hot Hands? Serial Crisis Behavior, Escalating Risks, and Rivalry.” *The Journal of Politics* 64(4): 1175–98.
+
+Cunningham, Fiona S. 2020. “The Maritime Rung on the Escalation Ladder: Naval Blockades in a US-China Conflict.” *Security Studies* 29(4): 730–68.
+
+Danilovic, Vesna. 2002. *When the Stakes are High: Deterrence and Conflict among Major Powers*. Ann Arbor, MI: University of Michigan Press.
+
+Diehl, Paul. 1985. “Contiguity and Military Escalation in Major Power Rivalries, 1816-1980.” *Journal of Politics* 47(4), 1203-1211.
+
+Douglas, Rex W., Thomas Leo Scherer, J. Andres Gannon, Erik Gartzke. 2023. “ICBeLLM: High Quality International Events Data with Open Source Large Language Models on Consumer Hardware.” Typescript. University of California, San Diego.
+
+Douglass, Rex W., Thomas Leo Scherer, J. Andrés Gannon, Erik Gartzke, Jon Lindsay, Shannon Carcelli, Jonathan Wilkenfeld, et al. 2022. “Introducing the ICBe Dataset: Very High Recall and Precision Event Extraction from Narratives about International Crises.” arXiv:2202.07081 \[Cs, Stat\], February. [https://arxiv.org/abs/2202.07081](https://urldefense.com/v3/__https:/arxiv.org/abs/2202.07081__;!!Mih3wA!CLsJAkIaG18LhmH8jhnNw4GVB0of31s_n91IbLKW_lSvbtP4jy3sO8Kgd4zgE_R38RC2ALcN0AsDgo9rF1LIew$).
+
+Fearon, James D. 1995. “Rationalist Explanations for War.” *International Organization* 49(3): 379—414.
+
+Fearon, James D. 1994. “Signaling Versus the Balance of Power and Interests: An Empirical Test of the Crisis Bargaining Model.” *Journal of Conflict Resolution* 38(2): 236—269.
+
+Fey, Mark, and Kristopher W. Ramsay. 2011. “Uncertainty and Incentives in Crisis Bargaining: Game‐Free Analysis of International Conflict.” *American Journal of Political Science*, 55(1), 149-169.
+
+Freedman, Lawrence. 2004. *Deterrence*. Washington DC: Polity Press.
+
+Freedman, Lawrence. 1981. *The Evolution of Nuclear Strategy*. London: Palgrave Macmillan.  
+
+Glaser, Charles L. 1992. “Political Consequences and Military Strategy: Expanding and Refining the Spiral and Deterrence Models.” *World Politics* 44(4):497—538.
+
+Hobbes, T. (1651). *Leviathan or the Matter, Forme, and Power of a Common-Wealth Ecclesiastical and Civill*. Project Gutenberg Ebook:  https://www.gutenberg.org/files/3207/3207-h/3207-h.htm.
+
+Gannon, J Andrés. 2022. “One If by Land, and Two If by Sea: Cross-Domain Contests and the Escalation of International Crises.” *International Studies Quarterly* 66(4).
+
+Gartzke, Erik, and Joseph J. Hewitt. 2010. “International Crises and the Capitalist Peace.” *International Interactions*, 36(2), 115-145.
+
+Gartzke, Erik, Jon Lindsay, and Rex Douglass. forthcoming. "International Crisis Behavior Event (ICBe) dataset: Creation and validation" In Kyle Beardsley, Patrick James, and Jonathan Wilkenfeld (eds.), *A Century of International Crises, 1918-2019*. Ann Arbor: University of Michigan Press.
+
+Gelpi, Christopher, and Michael Griesdorf. 2001. “Winners or Losers? Democracies in International Crises.” *American Political Science Review*, 95(3), 633-47.
+
+Goldstein, Joshua S. 1992. “A Conflict—Cooperation Scale for WEIS Events Data.” *Journal of Conflict Resolution* 36(2): 369—385.
+
+Guolin Ke, Qi Meng, Thomas Finley, Taifeng Wang, Wei Chen, Weidong Ma, Qiwei Ye, Tie-Yan Liu. 2017. "LightGBM: A Highly Efficient Gradient Boosting Decision Tree". *Advances in Neural Information Processing Systems* 30:3149-3157.
+
+Hegre, Haavard, Nils W. Metternich and Julian Wucherpfennig. 2017. “Introduction: Forecasting in Peace Research.” *Journal of Peace Research*, 54(2), 113-124.
+
+Herz, John. 1950. “Idealist Internationalism and the Security Dilemma.” *World Politics* 2(2):\
+157-180.
+
+Huth, Paul K. 1999. “Deterrence and International Conflict: Empirical Findings and Theoretical Debates.” *Annual Review of Political Science* 2: 25—48. 
+
+Huth, Paul K. 1988. *Extended Deterrence and the Prevention of War*. Yale University Press.
+
+Huth, Paul and Todd L. Allee. 2002. “Domestic Political Accountability and the Escalation and Settlement of International Disputes.” *Journal of Conflict Resolution* 46(6): 754-790.
+
+Huth, Paul K, Christopher Gelpi, and D. Scott Bennett. 1993. “The Escalation of Great Power Militarized Disputes: Testing Rational Deterrence Theory and Structural Realism.” *American Political Science Review*, 87(3), 609-623.
+
+Huth, Paul K., and Bruce Russett. 1988. “Deterrence Failure and Crisis Escalation.” *International Studies Quarterly* 32(1): 29—45.
+
+Huth, Paul K., and Bruce Russett. 1984. “What Makes Deterrence Work?: Cases from 1900 to 1980.” *World Politics* 36(4): 496—526.
+
+Kinsella, David, and Bruce Russett. 2002. “Conflict Emergence and Escalation in Interactive International Dyads.” *The Journal of Politics*, 64(4), 1045-1068.
+
+Jervis, Robert, Richard Ned Lebow and Janice Gross Stein. 1989. *Psychology and Deterrence*. Baltimore, MD: Johns Hopkins University Press.
+
+Jervis, Robert. 1976. *Perception and Misperception in International Politics*. Princeton, NJ:  Princeton University Press.
+
+Kahn, Herman. 1965. *On Escalation: Metaphors and Scenarios*. New York: Praeger.
+
+Kahn, Herman. 1960. *On Thermonuclear War*. Princeton, NJ: Princeton University Press.
+
+Kissinger, Henry. 1957. *Nuclear Weapons and Foreign Policy*. New York: Harper.
+
+Kreps, Sarah, and Jacquelyn Schneider. 2019. “Escalation Firebreaks in the Cyber, Conventional, and Nuclear Domains: Moving beyond Effects-Based Logics.” *Journal of Cybersecurity* 5(1): 1–11.
+
+Kydd, Andrew. 1997. “Game Theory and the Spiral Model.” *World Politics* 49(3):371—383.
+
+Lebow, Richard Ned and Janice Gross Stein. 1989. “Rational Deterrence Theory: I Think, Therefore I Deter.” *World Politics* 41(2): 208—224.
+
+Lin-Greenberg, Erik. 2023. “Evaluating Escalation: Conceptualizing Escalation in an Era of Emerging Military Technologies.” *The Journal of Politics*. 85(3):1151-1155.
+
+Maoz, Zeev, Paul L. Johnson, Jasper Kaplan, Fiona Ogunkoya and Aaron P. Shreve. 2019. “The Dyadic Militarized Interstate Disputes (MIDs) Dataset, Version 3: Logic, Characteristics and Comparisons to Alternative Datasets.” *Journal of Conflict Resolution* 63(3): 811—835. 
+
+McClelland, Charles. 1978. “World Event Interaction Survey.” *Inter-university Consortium for Political and Social Research (ICPSR)* Codebook #5211. University of Michigan.
+
+Mearsheimer, John J. 1983. *Conventional Deterrence*. Cornell University Press.
+
+Merrett, Richard L., Robert G. Muncaster and Dina A. Zinnes. 1993. *International Event-Data Developments: DDIR Phase II*. Ann Arbor, MI: University of Michigan Press.
+
+Morgan, Patrick M. 1977. *Deterrence: A Conceptual Analysis*. Los Angeles, CA: Sage.
+
+Morgenthau, Hans J. 1964. “The Four Paradoxes of Nuclear Strategy.” *American Political Science Review* 58(1): 23—35.
+
+Morrow, James D. 2019. “International Law and the Common Knowledge Requirements of Cross-Domain Deterrence.” In *Cross-Domain Deterrence: Strategy in an Era of Complexity*, edited by Jon R. Lindsay and Erik A. Gartzke, 1st edition., 187–204. New York, NY: Oxford University Press.
+
+Moul, William 1988. “Balance of Power and the Escalation to War of Serious Disputes among the European Great Powers, 1815-1939: Some Evidence.” *American Journal of Political Science* 32(2), 241-275.
+
+Nalebuff, Barry. 1986. “Brinkmanship and Nuclear Deterrence: The Neutrality of Escalation.” *Conflict Management and Peace Science* 9(1), 19-30.
+
+O’Neill, Barry. 1991. “Conflictual Moves in Bargaining: Warnings, Threats, Escalations, and Ultimatums.” In *Negotiation Analysis*, edited by H. Peyton Young, 87–108. University of Michigan Press.
+
+Powell, Robert. 1990. *Nuclear Deterrence Theory: The Search for Credibility*. Cambridge, UK:  Cambridge University Press.
+
+Quackenbush, Stephen 2011. *Understanding General Deterrence: Theory and Application*. New York:  Palgrave Macmillan. 
+
+Quackenbush, Stephen 2010. “General Deterrence and International Conflict: Testing Perfect Deterrence Theory.” *International Interactions* 36(1): 60-85.
+
+Raleigh, Clionadh, Andrew Linke, Haavard Hegre and Joakim Karlsen. 2010. “Introducing ACLED: An Armed Conflict Location and Events Dataset.” *Journal of Peace Research* 47(5): 652—660.
+
+Reed, William. 2000. “A Unified Statistical Model of Conflict Onset and Escalation.” *American Journal of Political Science* 44(1), 84-93.
+
+Rovner, Joshua. 2020. “Give Instability a Chance?” *War on the Rocks*, July 28. https://warontherocks.com/2020/07/give-instability-a-chance/.
+
+Sagan, Scott D. 1993. *The Limits of Safety: Organizations, Accidents and Nuclear Weapons*. Princeton, NJ: Princeton University Press.
+
+Sagan, Scott D. 1989. *Moving Targets: Nuclear Strategy and Nuclear Security*. Princeton, NJ: Princeton University Press.
+
+Schelling, Thomas. 1966. *Arms and Influence*. New Haven, CT: Yale University Press.
+
+Schrodt, Philip A. 2007. "Inductive event data scaling using item response theory." In *Summer Meeting of the Society of Political Methodology*. Available at http://eventdata.psu.edu.
+
+Schrodt, Phillip A. 2012. “CAMEO: Conflict and Mediation Event Observations Event and Actor Codebook.” Typescript. The Pennsylvania State University.
+
+Schultz, Kenneth A. 1998. “Domestic Opposition and Signaling in International Crises.” *American Political Science Review*, 92(4), 829-844.
+
+Sechser, Todd S., and Matthew Fuhrmann. 2013. “Crisis Bargaining and Nuclear Blackmail.” *International Organization* 67(1): 173—195. 
+
+Sherman, Frank. 1994.  “SHERFACS: A Cross-Paradigm, Hierarchical and Contextually Sensitive Management Dataset.” *International Interactions* 20(1): 79—100.
+
+Shirkey, Zachary. 2016. “Uncertainty and War Duration.” *International Studies Review* 18(2): 244—267.
+
+Shirkey, Zachary. 2012. “When and How Many: The Effects of Third Party Joining on Casualties and Duration in Interstate Wars.” *Journal of Peace Research* 49(2): 321-334. 
+
+Slantchev, Branislav L. 2005. “Military Coercion in Interstate Crises.” *American Political Science Review* 99(4): 533-547
+
+Smith, Alastair. 1999. “Testing Theories of Strategic Choice: The Example of Crisis Escalation.” *American Journal of Political Science* 43(4): 1254—1283. 
+
+Smith, Alastair. 1998. “International Crises and Domestic Politics.” *American Political Science Review*, 92(3), 623-638.
+
+Smith, Alastair. 1995. “Alliance Formation and War.” *International Studies Quarterly* 39(4): 405—425.
+
+Snyder, Glenn H. 1961. *Deterrence and Defense*. Princeton, NJ: Princeton University Press.
+
+Snyder, Glenn H., and Paul Diesing. 1977. *Conflict Among Nations: Bargaining, Decision Making and System Structure in International Crises*. Princeton, NJ: Princeton University Press.
+
+Sorokin, Gerald L. 1994. “Alliance Formation and General Deterrence: A Game-Theoretic Analysis.” *Journal of Conflict Resolution* 38(2): 298—325.
+
+Spaniel, William, and Işıl İdrisoğlu. 2023. “Endogenous Military Strategy and Crisis Bargaining.” *Conflict Management and Peace Science*, 0(0).
+
+Stam, Allan. 1996. *Win, Lose or Draw: Domestic Politics and the Crucible of War*. University of Michigan Press.
+
+Wagner, R. Harrison. 2007. *War and the State*. Ann Arbor, MI: University of Michigan Press.
+
+Wagner, R. Harrison. 2000. “Bargaining and War.” *American Journal of Political Science* 44(3):469—484. 
+
+Waltz, Kenneth 1990. “Nuclear Myths and Political Realities.” *American Political Science Review* 84(3): 731—745. 
+
+Weisiger, Alex. 2013. *Logics of War*. Ithaca, NY: Cornell University Press. 
+
+Wohlsletter, Albert. 1959. “The Delicate Balance of Terror.” *Foreign Affairs* 37: 209—234.
+
+Zagare, Frank C. and D. Marc Kilgour. 2000. *Perfect Deterrence*. Cambridge, UK:  Cambridge University Press.
+
+Zagare, Frank C. and D. Marc Kilgour. 1998. “Deterrence Theory and the Spiral Model Revisited.” *Journal of Theoretical Politics* 10(1):59—87.
+
 ```{r, eval=T, cache=F}
 library(tidyverse)
 library(tictoc)
