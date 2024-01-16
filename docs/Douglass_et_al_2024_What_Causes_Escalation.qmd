@@ -1,5 +1,5 @@
 ---
-title: "What is Escalation?:  Measuring Crisis Dynamics in International Relations with Human and Machine Generated Event Data"
+title: "What is Escalation?: Measuring Crisis Dynamics in International Relations with Human and Machine Generated Event Data"
 authors:
   - name: Rex W. Douglass
     affiliation: University of California, San Diego
@@ -52,7 +52,7 @@ What does it mean that an international crisis is escalating, and what actions w
 
 The international relations field offers two foundational perspectives on crisis dynamics, classically described by Robert Jervis (1976) as the deterrence model and the spiral model. The former blames escalation on the failure to credibly communicate threats (Rovner 2020) or misperceptions about capability or resolve (Morrow 2019). The latter views escalation as a retaliation to provocation where a tit-for-tat response fails to end the crisis (O’Neill 1991). These models offer contradictory policy prescriptions: on one hand, policymakers should use bold words and actions to discourage aggression; on the other, they should mitigate security dilemmas through compromise and accommodation. Historical studies typically provide more nuance, but the additional context needed to make sense of specific crises just highlights the fact that both models are underspecified. Neither model, moreover, is well integrated with more recent thinking about the underlying bargaining dynamics of military contests (Fearon 1995). Previous empirical research designed to validate or reject competing theoretical explanations for escalation has faced daunting challenges given that the basis for comparison and/or the logical discrepancies between alternative theories have not been resolved (Glaser 1992; Kydd 1997; Zagare and Kilgour 1998) and the ability to empirically assess such efforts is complicated by the structural indeterminacy of uncertainty (Gartzke 1999; Chen, et al. 2022). These efforts have yet to establish a consensus pecking order between canonical alternatives (c.f., Wright 1965; Carlson 1995; Kinsella and Russett 2002).
 
-Recognizing the enormous efforts of previous theoretical and empirical scholarship, we adopt an abductive approach designed to explore the correlates of escalation/de-escalation in a novel data source constructed by the authors and others (Douglass, et al. 2022; Gartzke, et al. 2023). Our approach capitalizes on a new dataset, the International Crisis Behavior Events (ICBe) dataset, augmented by machine-coded data ICBeLLM. To our knowledge, these are the first international conflict data to code the full sequence of statements and actions by actors necessary to capture escalation as a process. These data allow us to track the actions and reactions of every relevant actor in the 475 interstate crises available from the canonical ICB dataset; who did what to whom, when, where, and how. Doing so allows us to identify various factors most likely to lead to escalation or de-escalation in crises. Using these triggers, we can develop a model that estimates (predicts) both the path and duration of international crises and that indicates likely precursors and their effects. We find support for neither the deterrence nor spiral model, in their classic forms, suggesting the need for a more nuanced theory that can accommodate the historical contingency and complexity of crisis processes.
+Recognizing the enormous efforts of previous theoretical and empirical scholarship, we adopt an abductive approach designed to explore the correlates of escalation/de-escalation in a novel data source constructed by the authors and others (Douglass, et al. 2022; Douglass, et al. forthcoming). Our approach capitalizes on a new dataset, the International Crisis Behavior Events (ICBe) dataset, augmented by machine-coded data ICBeLLM. To our knowledge, these are the first international conflict data to code the full sequence of statements and actions by actors necessary to capture escalation as a process. These data allow us to track the actions and reactions of every relevant actor in the 475 interstate crises available from the canonical ICB dataset; who did what to whom, when, where, and how. Doing so allows us to identify various factors most likely to lead to escalation or de-escalation in crises. Using these triggers, we can develop a model that estimates (predicts) both the path and duration of international crises and that indicates likely precursors and their effects. We find support for neither the deterrence nor spiral model, in their classic forms, suggesting the need for a more nuanced theory that can accommodate the historical contingency and complexity of crisis processes.
 
 This analysis is organized as follows. We first briefly review the most relevant examples of research on deterrence and the spiral model, both theory and evidence. We then discuss the problem of inference about processes utilizing non-process datasets (the only data that has been available to researchers up until this point in studying international conflict). The bulk of the chapter focuses on our abductive empirical “deep dive” (Tavory and Timmermans 2014; Heckman and Singer 2017) presenting details of the novel ICBeLLM dataset (Douglass, et al. 2023), identifying variables associated with escalation and de-escalation, and estimating our crisis duration model, based on these variables. We conclude with some insights of the project and suggestions for future research.
 
@@ -325,6 +325,8 @@ Bismarck, Otto von. 2013\[1899\]. *Bismarck: The Man and the Statesman*, vols 1&
 
 Bosch, Richard. 2017.  “Conflict Escalation.” *The Oxford Encyclopedia of International Studies*. pp. 1-26. Oxford, UK: Oxford University Press.
 
+Brams, Steven J., and Kilgour, D. Marc. 1987. “Threat Escalation and Crisis Stability: A Game-theoretic Analysis.” *American Political Science Review* 81:833–50.
+
 Brecher, Michael, and Jonathan Wilkenfeld. 1997. *A Study in Crisis*. Ann Arbor, MI: University of Michigan. 
 
 Brecher, Michael, and Jonathan Wilkenfeld. 1982. "Crises in World Politics." *World Politics* 34(3):380–417.
@@ -337,7 +339,11 @@ Carlson, Lisa J. 1995. “A Theory of Escalation and International Conflict.” 
 
 Carter, David B. and Curtis S. Signorino. 2010. “Back to the Future: Modeling Time Dependence in Binary Data.” *Political Analysis* 18(3): 271—292.
 
+Chen, Chong, Jordan Roberts, Shikshya Adhikari, Victor Asal, Kyle Beardsley, Edward Gonzalez, Nakissa Jahanbani, Patrick James, Steven E Lobell, Norrin M Ripsman, Scott Silverstone, and Anne van Wijk. 2022. "Tipping Points: Challenges in Analyzing International Crisis Escalation." *International Studies Review* 24(3).
+
 Colaresi, Michael P., and William R. Thompson. 2002. “Hot Spots or Hot Hands? Serial Crisis Behavior, Escalating Risks, and Rivalry.” *The Journal of Politics* 64(4): 1175–98.
+
+Coletta, Damon, and Erik Gartzke. 2003. “Testing War In the Error Term.” *International Organization* 57(2): 445–48. doi: 10.1017/S0020818303572083.
 
 Cunningham, Fiona S. 2020. “The Maritime Rung on the Escalation Ladder: Naval Blockades in a US-China Conflict.” *Security Studies* 29(4): 730–68.
 
@@ -345,13 +351,15 @@ Danilovic, Vesna. 2002. *When the Stakes are High: Deterrence and Conflict among
 
 Diehl, Paul. 1985. “Contiguity and Military Escalation in Major Power Rivalries, 1816-1980.” *Journal of Politics* 47(4), 1203-1211.
 
-Douglas, Rex W., Thomas Leo Scherer, J. Andres Gannon, Erik Gartzke. 2023. “ICBeLLM: High Quality International Events Data with Open Source Large Language Models on Consumer Hardware.” Typescript. University of California, San Diego.
+Douglass, Rex W., Thomas Leo Scherer, J. Andres Gannon, Erik Gartzke. forthcoming. “ICBeLLM: High Quality International Events Data with Open Source Large Language Models on Consumer Hardware.” In Kyle Beardsley, Patrick James, and Jonathan Wilkenfeld (eds.), *A Century of International Crises, 1918-2019*. Ann Arbor: University of Michigan Press.
 
 Douglass, Rex W., Thomas Leo Scherer, J. Andrés Gannon, Erik Gartzke, Jon Lindsay, Shannon Carcelli, Jonathan Wilkenfeld, et al. 2022. “Introducing the ICBe Dataset: Very High Recall and Precision Event Extraction from Narratives about International Crises.” arXiv:2202.07081 \[Cs, Stat\], February. [https://arxiv.org/abs/2202.07081](https://urldefense.com/v3/__https:/arxiv.org/abs/2202.07081__;!!Mih3wA!CLsJAkIaG18LhmH8jhnNw4GVB0of31s_n91IbLKW_lSvbtP4jy3sO8Kgd4zgE_R38RC2ALcN0AsDgo9rF1LIew$).
 
 Fearon, James D. 1995. “Rationalist Explanations for War.” *International Organization* 49(3): 379—414.
 
 Fearon, James D. 1994. “Signaling Versus the Balance of Power and Interests: An Empirical Test of the Crisis Bargaining Model.” *Journal of Conflict Resolution* 38(2): 236—269.
+
+Fearon, James. 2002. "Selection effects and deterrence." *International Interactions* 28(1): 5-29.
 
 Fey, Mark, and Kristopher W. Ramsay. 2011. “Uncertainty and Incentives in Crisis Bargaining: Game‐Free Analysis of International Conflict.” *American Journal of Political Science*, 55(1), 149-169.
 
@@ -361,13 +369,11 @@ Freedman, Lawrence. 1981. *The Evolution of Nuclear Strategy*. London: Palgrave 
 
 Glaser, Charles L. 1992. “Political Consequences and Military Strategy: Expanding and Refining the Spiral and Deterrence Models.” *World Politics* 44(4):497—538.
 
-Hobbes, T. (1651). *Leviathan or the Matter, Forme, and Power of a Common-Wealth Ecclesiastical and Civill*. Project Gutenberg Ebook:  https://www.gutenberg.org/files/3207/3207-h/3207-h.htm.
-
 Gannon, J Andrés. 2022. “One If by Land, and Two If by Sea: Cross-Domain Contests and the Escalation of International Crises.” *International Studies Quarterly* 66(4).
 
-Gartzke, Erik, and Joseph J. Hewitt. 2010. “International Crises and the Capitalist Peace.” *International Interactions*, 36(2), 115-145.
+Gartzke, Erik. 1999. “War Is in the Error Term.” *International Organization* 53(3): 567–87.
 
-Gartzke, Erik, Jon Lindsay, and Rex Douglass. forthcoming. "International Crisis Behavior Event (ICBe) dataset: Creation and validation" In Kyle Beardsley, Patrick James, and Jonathan Wilkenfeld (eds.), *A Century of International Crises, 1918-2019*. Ann Arbor: University of Michigan Press.
+Gartzke, Erik, and Joseph J. Hewitt. 2010. “International Crises and the Capitalist Peace.” *International Interactions*, 36(2), 115-145.
 
 Gelpi, Christopher, and Michael Griesdorf. 2001. “Winners or Losers? Democracies in International Crises.” *American Political Science Review*, 95(3), 633-47.
 
@@ -375,10 +381,14 @@ Goldstein, Joshua S. 1992. “A Conflict—Cooperation Scale for WEIS Events Dat
 
 Guolin Ke, Qi Meng, Thomas Finley, Taifeng Wang, Wei Chen, Weidong Ma, Qiwei Ye, Tie-Yan Liu. 2017. "LightGBM: A Highly Efficient Gradient Boosting Decision Tree". *Advances in Neural Information Processing Systems* 30:3149-3157.
 
+Heckman, James J., and Burton Singer. 2017. "Abducting Economics." *American Economic Review*, 107 (5): 298-302.
+
 Hegre, Haavard, Nils W. Metternich and Julian Wucherpfennig. 2017. “Introduction: Forecasting in Peace Research.” *Journal of Peace Research*, 54(2), 113-124.
 
 Herz, John. 1950. “Idealist Internationalism and the Security Dilemma.” *World Politics* 2(2):\
 157-180.
+
+Hobbes, T. (1651). *Leviathan or the Matter, Forme, and Power of a Common-Wealth Ecclesiastical and Civill*. Project Gutenberg Ebook:  https://www.gutenberg.org/files/3207/3207-h/3207-h.htm.
 
 Huth, Paul K. 1999. “Deterrence and International Conflict: Empirical Findings and Theoretical Debates.” *Annual Review of Political Science* 2: 25—48. 
 
@@ -432,6 +442,8 @@ Nalebuff, Barry. 1986. “Brinkmanship and Nuclear Deterrence: The Neutrality of
 
 O’Neill, Barry. 1991. “Conflictual Moves in Bargaining: Warnings, Threats, Escalations, and Ultimatums.” In *Negotiation Analysis*, edited by H. Peyton Young, 87–108. University of Michigan Press.
 
+Powell, Robert. 1989. “Crisis Stability in the Nuclear Age.” *American Political Science Review* 83(1): 61–76.
+
 Powell, Robert. 1990. *Nuclear Deterrence Theory: The Search for Credibility*. Cambridge, UK:  Cambridge University Press.
 
 Quackenbush, Stephen 2011. *Understanding General Deterrence: Theory and Application*. New York:  Palgrave Macmillan. 
@@ -481,6 +493,8 @@ Sorokin, Gerald L. 1994. “Alliance Formation and General Deterrence: A Game-T
 Spaniel, William, and Işıl İdrisoğlu. 2023. “Endogenous Military Strategy and Crisis Bargaining.” *Conflict Management and Peace Science*, 0(0).
 
 Stam, Allan. 1996. *Win, Lose or Draw: Domestic Politics and the Crucible of War*. University of Michigan Press.
+
+Tavory, Iddo, and Timmermans, Stefan. 2014. *Abductive Analysis: Theorizing Qualitative Research*. United Kingdom, University of Chicago Press.
 
 Wagner, R. Harrison. 2007. *War and the State*. Ann Arbor, MI: University of Michigan Press.
 
