@@ -4,9 +4,7 @@
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 %
 \documentclass[
-  letterpaper,
-  DIV=11,
-  numbers=noendperiod]{scrartcl}
+]{article}
 
 \usepackage{amsmath,amssymb}
 \usepackage{iftex}
@@ -22,6 +20,8 @@
 \usepackage{lmodern}
 \ifPDFTeX\else  
     % xetex/luatex font selection
+  \setmainfont[]{Latin Modern Roman}
+  \setmathfont[]{Latin Modern Math}
 \fi
 % Use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -41,7 +41,7 @@
 \makeatother
 \usepackage{xcolor}
 \setlength{\emergencystretch}{3em} % prevent overfull lines
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\setcounter{secnumdepth}{5}
 % Make \paragraph and \subparagraph free-standing
 \ifx\paragraph\undefined\else
   \let\oldparagraph\paragraph
@@ -78,19 +78,18 @@
 \def\fps@figure{htbp}
 \makeatother
 
-\usepackage{fontspec}
-\usepackage{multirow}
-\usepackage{multicol}
-\usepackage{colortbl}
-\usepackage{hhline}
-\newlength\Oldarrayrulewidth
-\newlength\Oldtabcolsep
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{hyperref}
-\usepackage{float}
-\usepackage{wrapfig}
-\KOMAoption{captions}{tableheading}
+\usepackage{arxiv}
+\usepackage{orcidlink}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{pifont}
+\usepackage{newunicodechar}
+\usepackage{amssymb}
+\newunicodechar{✓}{\ding{51}}
+\newunicodechar{✗}{\ding{55}}
+\newunicodechar{̆}{\u{}}
+\newunicodechar{∈}{\in}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -149,14 +148,19 @@
   urlcolor={Blue},
   pdfcreator={LaTeX via pandoc}}
 
+\renewcommand{\today}{2024-01-17}
+\newcommand{\runninghead}{A Preprint }
 \title{What is Escalation? Measuring Crisis Dynamics in International
 Relations with Human and LLM Generated Event Data}
-\author{Rex W. Douglass\textsuperscript{1} \and Erik
-Gartzke\textsuperscript{1} \and Jon R.
-Lindsay\textsuperscript{2} \and J. Andrés
-Gannon\textsuperscript{3} \and Thomas Leo Scherer\textsuperscript{1}}
+\def\asep{\\\\\\ } % default: all authors on same column
+\def\asep{\And }
+\author{\textbf{Rex W. Douglass}\\\\University of California, San
+Diego\\\\\asep\textbf{Erik Gartzke}\\\\University of California, San
+Diego\\\\\asep\textbf{Jon R. Lindsay}\\\\Georgia Institute of
+Technology\\\\\asep\textbf{J. Andrés Gannon}\\\\Vanderbilt
+University\\\\\asep\textbf{Thomas Leo Scherer}\\\\University of
+California, San Diego\\\\}
 \date{2024-01-17}
-
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -197,9 +201,8 @@ maintain peace and stability? Can we predict how states will react to
 specific events during crises? Can we recommend policies or actions that
 are most likely to lead to success without being destabilizing? In
 short, what empirical evidence can we bring to bear on the practical
-questions of crisis management?\footnote{Consistent findings in the
-  context of cross-domain deterrence and escalation using the ICBe data
-  are described in Gannon (2022).}
+questions of crisis management?\footnote{See Gannon (2022) for a recent
+  review in the context of cross-domain deterrence and escalation.}
 
 The international relations field offers two foundational perspectives
 on crisis dynamics, classically described by Robert Jervis (1976) as the
@@ -247,18 +250,21 @@ forms, suggesting the need for a more nuanced theory that can
 accommodate the historical contingency and complexity of crisis
 processes.
 
-This analysis is organized as follows. We first briefly review the most
-relevant examples of research on deterrence and the spiral model, both
-theory and evidence. We then discuss the problem of inference about
-processes utilizing non-process datasets (the only data that has been
-available to researchers up until this point in studying international
-conflict). The bulk of the chapter focuses on our abductive empirical
-``deep dive'' (Tavory and Timmermans 2014; Heckman and Singer 2017)
-presenting details of the novel ICBeLLM dataset (Douglass, et al.~2023),
-identifying variables associated with escalation and de-escalation, and
-estimating our crisis duration model, based on these variables. We
-conclude with some insights of the project and suggestions for future
-research.
+This analysis is organized as follows. Section 2 briefly formalizes the
+concept of an international crisis and the concept of escalation within
+a crisis. It then draws prior beliefs from existing theories of
+escalation, particularly deterrence and spiral models of conflict.
+Section 3 introduces the data, turn-by-turn event data collected for 475
+individual crises (Douglass, et al.~2023). This section also presents
+our estimand---the unobserved latent quality of an action being
+escalatory or de-escalatory at a specific point in a crisis---and our
+measurement strategy, which involves observing the empirical increase or
+decrease in the remaining duration of a crisis as a function of the
+observed actions. Section 4 describes our modeling strategy and presents
+empirical results. Section 5 provides a qualitative deep dive with a few
+choice case studies (Tavory and Timmermans 2014; Heckman and Singer
+2017). Section 6 offers concluding remarks and implications of our
+findings.
 
 \section{Crises, Escalation, and the State of the
 Art}\label{crises-escalation-and-the-state-of-the-art}
@@ -350,193 +356,15 @@ escalatory/de-escalatory were perhaps premature, and instead for our
 purposes here we argue these are better thought of as indicators for and
 against a state of crisis/stability within a single discrete time step.
 
-\global\setlength{\Oldarrayrulewidth}{\arrayrulewidth}
-
-\global\setlength{\Oldtabcolsep}{\tabcolsep}
-
-\setlength{\tabcolsep}{0pt}
-
-\renewcommand*{\arraystretch}{1.5}
-
-
-
-\providecommand{\ascline}[3]{\noalign{\global\arrayrulewidth #1}\arrayrulecolor[HTML]{#2}\cline{#3}}
-
-\begin{longtable*}[c]{|p{1.75in}|p{1.75in}|p{1.75in}|p{1.75in}}
-
-
-
-\ascline{1.5pt}{666666}{1-4}
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{10}{10}\selectfont{Armed\ Escalatory}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{10}{10}\selectfont{Unarmed\ Uncooperative}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{10}{10}\selectfont{Armed\ De-escalatory}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{10}{10}\selectfont{Unarmed\ Cooperative}}} \\
-
-\ascline{1.5pt}{666666}{1-4}\endfirsthead 
-
-\ascline{1.5pt}{666666}{1-4}
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{10}{10}\selectfont{Armed\ Escalatory}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{10}{10}\selectfont{Unarmed\ Uncooperative}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{10}{10}\selectfont{Armed\ De-escalatory}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{10}{10}\selectfont{Unarmed\ Cooperative}}} \\
-
-\ascline{1.5pt}{666666}{1-4}\endhead
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Raise\ in\ alert}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Break\ off\ negotiations}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Lower\ alert}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Discussion}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Mobilization}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Withdraw\ diplomats}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{De-mobilization}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Meeting}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Fortify}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Violate\ terms\ of\ treaty}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Remove\ fortify}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Mediation}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Exercise}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Political\ succession}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ exercise}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Natural\ conclusion\ of\ diplomacy}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Weapons\ test}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Leave\ alliance}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ weapons\ test}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Sign\ formal\ agreement}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Deployment\ to\ area}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Terminate\ treaty}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Withdraw\ from\ area}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Settle\ dispute}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Show\ of\ force}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ economic\ cooperation}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Withdraw\ behind\ border}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Join\ war\ on\ behalf}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Blockade}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ military\ cooperation}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ blockade}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Formal\ military\ alliance}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Border\ violation}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ intelligence\ cooperation}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Ceasefire}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Mutual\ defense\ pact}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{No\ fly\ zone}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ unspecified\ cooperation}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Retreat}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Economic\ cooperation}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Battle/clash}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ economic\ aid}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Surrender}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Military\ cooperation}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Attack}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ humanitarian\ aid}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Declaration\ of\ peace}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Intelligence\ cooperation}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Invasion/occupation}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ military\ aid}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Withdraw\ from\ war}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Unspecified\ cooperation}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Bombard}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ unspecified\ aid}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Switch\ sides\ in\ war}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{General\ political\ support}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Declaration\ of\ war}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{End\ access}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Reduce\ control\ over}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Economic\ aid}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Join\ ongoing\ war}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Expel}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Decolonize}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Humanitarian\ aid}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Continuation\ of\ previous\ fighting}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Propaganda}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Military\ aid}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Assert\ political\ control\ over}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Imprison}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Unspecified\ aid}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Annex}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Inspections}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Assert\ autonomy\ against}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Release\ captives}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Cede\ territory}}} \\
-
-
-
-
-
-\multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{}}} & \multicolumn{1}{>{\raggedright}m{\dimexpr 1.75in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{9}{9}\selectfont{Allow\ access}}} \\
-
-\ascline{1.5pt}{666666}{1-4}
-
-
-
-\multicolumn{4}{>{\raggedright}m{\dimexpr 7in+6\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Table\ 1:\ ICBe\ Ontology\ Categorization\ of\ Behaviors\ into\ Escalatory/Uncooperative\ vs\ De-escalatory/Cooperative}}} \\
-
-
-
-
-
-\end{longtable*}
-
-
-
-\arrayrulecolor[HTML]{000000}
-
-\global\setlength{\arrayrulewidth}{\Oldarrayrulewidth}
-
-\global\setlength{\tabcolsep}{\Oldtabcolsep}
-
-\renewcommand*{\arraystretch}{1}
+\includegraphics{Table1.png}
 
 \subsection{Defining
 Escalation/De-escalation}\label{defining-escalationde-escalation}
 
-We take exactly one time step back in our stylized crisis to \(t−1\) and
+We take exactly one time step back in our stylized crisis to \(t-1\) and
 define the relationship between a given behavior and crisis stability.
 For simplicity, we assume the player is already in a state of crisis at
-\(t−1\), and so the only transition probabilities we are interested in
+\(t-1\), and so the only transition probabilities we are interested in
 are from crisis to crisis, \(P(C\rightarrow C)\), and from crisis to
 stability \(P(C\rightarrow S)\). Because the two outcomes are mutually
 exclusive, we can further consider just a single transition, and so we

@@ -25,14 +25,14 @@ format:
 #quarto add kapsner/authors-block
 #  docx:
 #    code-fold: false
-  pdf:
-    keep-tex: true
-#    fontfamily: inter
-    fontfamilyoptions: type1
-#  arxiv-pdf:
+#  pdf:
 #    keep-tex: true
+#    fontfamily: inter
+#    fontfamilyoptions: type1
+  arxiv-pdf:
+    keep-tex: true
 #    number_sections: false
-#    authorcols: true
+    authorcols: true
 editor: source
 pdf-engine: pdflatex
 execute:
@@ -45,6 +45,18 @@ execute:
 embed-resources: true
 bibliography: ICBintro.bib
 abstract: When a dangerous international crisis begins, leaders need to know whether their next move is going to resolve the dispute or amplify it out of control. Theories of conflict have mainly served to deepen the confusion, revealing fighting, bargaining, and signaling to be high-dimensional and subtle equilibrium behaviors with deeply contextual consequences. Should a leader communicate resolve through aggressive acts, avoid spirals through accommodation, or focus on ensuring the possibility of a bargain? We offer a data-driven empirical solution to this logjam in the form of a new large-scale analysis of actions taken within 475 crises. We combine two complimentary measurement projects, the human-coded International Crisis Behavior Events (ICBe) dataset and the new machine-coded ICBeLLM. We model directly whether an action tends to shorten or extend the length of a crisis. The result is a directly interpretable measure of the latent escalatory/deescalatory nature of each action leaders have chosen over the last century.
+#Disabled several the caused errors
+header-includes:
+#  - \usepackage{xr} \externaldocument{appendix} #External references from the appendix
+#  - \usepackage{tinytex}
+  - \usepackage[utf8]{inputenc}
+  - \usepackage{pifont}
+  - \usepackage{newunicodechar}
+  - \usepackage{amssymb}
+  - \newunicodechar{✓}{\ding{51}}
+  - \newunicodechar{✗}{\ding{55}}
+  - \newunicodechar{̆}{\u{}}
+  - \newunicodechar{∈}{\in}
 ---
 
 ```{python, eval=F}
@@ -531,8 +543,8 @@ temp <- df %>%   #mutate(variable=rownames(mycoefs)) %>%
   mutate(color_category = ifelse(aggression_change %in% "increase","red",color_category)) %>%
   mutate(color_category = ifelse(aggression_change %in% "decrease","forestgreen",color_category)) %>%
   mutate(category = "Error") %>%
-  mutate(category = ifelse(color_category %in% "red","Escalate/Uncoop",category)) %>%
-  mutate(category = ifelse(color_category %in% "forestgreen","De-escalate/Coop",category)) %>%
+  mutate(category = ifelse(color_category %in% "red","Escalatory/Uncooperative",category)) %>%
+  mutate(category = ifelse(color_category %in% "forestgreen","De-escalatory/Cooperative",category)) %>%
   mutate(category = ifelse(color_category %in% "blue","Speech",category)) %>%
   mutate(category = ifelse(color_category %in% "darkorange","Thought",category)) %>%
   mutate(category = ifelse(color_category %in% "purple","Details",category)) %>%
@@ -558,7 +570,7 @@ p_Figure1 <- temp %>%
   theme_bw()
   #theme(axis.text.y = element_text( colour = temp$color_category ) )  #angle = 0, hjust = 0,
 
-ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure1_Behavior_Locations.pdf", plot = p_Figure1, width = 10, height = 14)
+ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure1_Behavior_Locations.png", plot = p_Figure1, width = 10, height = 14)
 
 
 ```
@@ -853,7 +865,7 @@ p_Figure2 <- temp1 %>%
        subtitle="Subset to behaviors with total time discounted contribution > 0.05\nBehaviors: Thoughts (orange); Speech (blue); Escalatory Actions (red); De-escalatory Actions (green); Action Details (Purple)")+ 
   theme(axis.text.y = element_text( colour = temp2$color_category) )
 
-ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure2_LightGBM_Results.pdf", plot = p_Figure2, width = 10, height = 14)
+ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure2_LightGBM_Results.png", plot = p_Figure2, width = 10, height = 14)
 
     
 ```
@@ -963,7 +975,7 @@ p_Figure3 <- plot_grid(p1, p3, p2,
 # If you want to save the combined plot to a file
 #ggsave("combined_plot.png", combined_plot, width = 10, height = 30, dpi = 300)
 
-ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure3_TimeSeries.pdf", plot = p_Figure3, width = 14, height = 12)
+ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure3_TimeSeries.png", plot = p_Figure3, width = 14, height = 12)
 
 
 ```
@@ -1047,7 +1059,7 @@ p_Figure4 <- cowplot::ggdraw() +
   cowplot::draw_plot(p4) +
   cowplot::draw_plot(pd, x = 0.6, y = 0.6, width = 0.3, height = 0.3)
 
-ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.pdf", plot = p_Figure4, width = 10, height = 6)
+ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.png", plot = p_Figure4, width = 10, height = 6)
 
 # Draw the combined plot
 #plot(overlay_plot)
@@ -1057,13 +1069,13 @@ ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/F
 
 # Introduction
 
-What does it mean that an international crisis is escalating, and what actions within a crisis are escalatory? This question haunts recent and ongoing crises such as missile tests on the Korean Peninsula, Russian incursions in Ukraine, partial state death in Syria, and Chinese claims of sovereignty in the South and East China Seas. In these situations, leaders face a shared fundamental question about how to navigate a dangerous situation without accidentally sliding over the line into a larger-than-desired conflict (Snyder and Diesing 1977; Slantchev 2005). Often leaders must make decisions with limited time and inadequate information (Jervis 1976, p. 95). What guidance can we offer to help maintain peace and stability? Can we predict how states will react to specific events during crises? Can we recommend policies or actions that are most likely to lead to success without being destabilizing? In short, what empirical evidence can we bring to bear on the practical questions of crisis management?^[Consistent findings in the context of cross-domain deterrence and escalation using the ICBe data are described in Gannon (2022).]
+What does it mean that an international crisis is escalating, and what actions within a crisis are escalatory? This question haunts recent and ongoing crises such as missile tests on the Korean Peninsula, Russian incursions in Ukraine, partial state death in Syria, and Chinese claims of sovereignty in the South and East China Seas. In these situations, leaders face a shared fundamental question about how to navigate a dangerous situation without accidentally sliding over the line into a larger-than-desired conflict (Snyder and Diesing 1977; Slantchev 2005). Often leaders must make decisions with limited time and inadequate information (Jervis 1976, p. 95). What guidance can we offer to help maintain peace and stability? Can we predict how states will react to specific events during crises? Can we recommend policies or actions that are most likely to lead to success without being destabilizing? In short, what empirical evidence can we bring to bear on the practical questions of crisis management?^[See Gannon (2022) for a recent review in the context of cross-domain deterrence and escalation.]
 
 The international relations field offers two foundational perspectives on crisis dynamics, classically described by Robert Jervis (1976) as the deterrence model and the spiral model. The former blames escalation on the failure to credibly communicate threats (Rovner 2020) or misperceptions about capability or resolve (Morrow 2019). The latter views escalation as a retaliation to provocation where a tit-for-tat response fails to end the crisis (O’Neill 1991). These models offer contradictory policy prescriptions: on one hand, policymakers should use bold words and actions to discourage aggression; on the other, they should mitigate security dilemmas through compromise and accommodation. Historical studies typically provide more nuance, but the additional context needed to make sense of specific crises just highlights the fact that both models are underspecified. Neither model, moreover, is well integrated with more recent thinking about the underlying bargaining dynamics of military contests (Fearon 1995). Previous empirical research designed to validate or reject competing theoretical explanations for escalation has faced daunting challenges given that the basis for comparison and/or the logical discrepancies between alternative theories have not been resolved (Glaser 1992; Kydd 1997; Zagare and Kilgour 1998) and the ability to empirically assess such efforts is complicated by the structural indeterminacy of uncertainty (Gartzke 1999; Chen, et al. 2022). These efforts have yet to establish a consensus pecking order between canonical alternatives (c.f., Wright 1965; Carlson 1995; Kinsella and Russett 2002).
 
 Recognizing the enormous efforts of previous theoretical and empirical scholarship, we adopt an abductive approach designed to explore the correlates of escalation/de-escalation in a novel data source constructed by the authors and others (Douglass, et al. 2022; Douglass, et al. forthcoming). Our approach capitalizes on a new dataset, the International Crisis Behavior Events (ICBe) dataset, augmented by machine-coded data ICBeLLM. To our knowledge, these are the first international conflict data to code the full sequence of statements and actions by actors necessary to capture escalation as a process. These data allow us to track the actions and reactions of every relevant actor in the 475 interstate crises available from the canonical ICB dataset; who did what to whom, when, where, and how. Doing so allows us to identify various factors most likely to lead to escalation or de-escalation in crises. Using these triggers, we can develop a model that estimates (predicts) both the path and duration of international crises and that indicates likely precursors and their effects. We find support for neither the deterrence nor spiral model, in their classic forms, suggesting the need for a more nuanced theory that can accommodate the historical contingency and complexity of crisis processes.
 
-This analysis is organized as follows. We first briefly review the most relevant examples of research on deterrence and the spiral model, both theory and evidence. We then discuss the problem of inference about processes utilizing non-process datasets (the only data that has been available to researchers up until this point in studying international conflict). The bulk of the chapter focuses on our abductive empirical “deep dive” (Tavory and Timmermans 2014; Heckman and Singer 2017) presenting details of the novel ICBeLLM dataset (Douglass, et al. 2023), identifying variables associated with escalation and de-escalation, and estimating our crisis duration model, based on these variables. We conclude with some insights of the project and suggestions for future research.
+This analysis is organized as follows. Section 2 briefly formalizes the concept of an international crisis and the concept of escalation within a crisis. It then draws prior beliefs from existing theories of escalation, particularly deterrence and spiral models of conflict. Section 3 introduces the data, turn-by-turn event data collected for 475 individual crises (Douglass, et al. 2023). This section also presents our estimand—the unobserved latent quality of an action being escalatory or de-escalatory at a specific point in a crisis—and our measurement strategy, which involves observing the empirical increase or decrease in the remaining duration of a crisis as a function of the observed actions. Section 4 describes our modeling strategy and presents empirical results. Section 5 provides a qualitative deep dive with a few choice case studies (Tavory and Timmermans 2014; Heckman and Singer 2017). Section 6 offers concluding remarks and implications of our findings.
 
 # Crises, Escalation, and the State of the Art
 
@@ -1211,7 +1223,7 @@ bind_cols(df1,df2,df3,df4) %>%
 
 ```
 
-```{r, eval=T, output=T}
+```{r, eval=T, output=F}
 library(flextable)
 library(dplyr)
 
@@ -1242,13 +1254,16 @@ ft <- width(ft, j = 3, width = 1.75)
 ft <- width(ft, j = 4, width = 1.75)
 
 # Display the table
-ft %>% set_table_properties(opts_pdf=list(fonts_ignore=T))
+ft %>% set_table_properties(opts_pdf=list(fonts_ignore=T)) %>% save_as_image( path = "/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Table1.png")
+
 
 ```
 
+![](Table1.png)
+
 ## Defining Escalation/De-escalation
 
-We take exactly one time step back in our stylized crisis to $t−1$ and define the relationship between a given behavior and crisis stability. For simplicity, we assume the player is already in a state of crisis at $t−1$, and so the only transition probabilities we are interested in are from crisis to crisis, $P(C\rightarrow C)$, and from crisis to stability $P(C\rightarrow S)$. Because the two outcomes are mutually exclusive, we can further consider just a single transition, and so we choose $P(C\rightarrow C)$, the probability of crisis being followed by more crisis. As before, we can think of all of the same behaviors, $b_{p^-1,t}$, simply observed one time step earlier, and we can assign another weight vector $\beta=1,2,..,n$, and specify some function that maps the last period’s behaviors to the next period’s probability of being in a state of crisis $\Theta_{p,t} = F(\sum^n_{i=1}\beta_i * b_{t-1,i})$.
+We take exactly one time step back in our stylized crisis to $t-1$ and define the relationship between a given behavior and crisis stability. For simplicity, we assume the player is already in a state of crisis at $t-1$, and so the only transition probabilities we are interested in are from crisis to crisis, $P(C\rightarrow C)$, and from crisis to stability $P(C\rightarrow S)$. Because the two outcomes are mutually exclusive, we can further consider just a single transition, and so we choose $P(C\rightarrow C)$, the probability of crisis being followed by more crisis. As before, we can think of all of the same behaviors, $b_{p^-1,t}$, simply observed one time step earlier, and we can assign another weight vector $\beta=1,2,..,n$, and specify some function that maps the last period’s behaviors to the next period’s probability of being in a state of crisis $\Theta_{p,t} = F(\sum^n_{i=1}\beta_i * b_{t-1,i})$.
 
 Unlike before, the theoretical literature on crisis stability is far more divided on what those weights should be (Brams and Kilgour 1987; Powell 1989). As a gross simplification, one major vein of literature views the weights of escalation to be highly correlated with the weights indicating a crisis (Colaresi and Thompson 2002), while another views at least some of the weights as flipped (Spaniel and Idrisoğlu 2023).
 
@@ -1361,7 +1376,7 @@ To see how representative these temporal trends are we next cluster the predicte
 <!-- \< FIGURE 4 about here \> -->
 
 <!-- ![Figure 4](/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.pdf){width=100%}
-<img src="/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.pdf" style="width: 100%; height: auto;">  -->
+<img src="/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.png" style="width: 100%; height: auto;">  -->
 
 
 ```{r, eval=T, fig.width=10, fig.height=6, output=T}
