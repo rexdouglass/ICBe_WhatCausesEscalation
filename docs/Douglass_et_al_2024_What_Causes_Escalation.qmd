@@ -1242,7 +1242,8 @@ ft <- width(ft, j = 3, width = 1.75)
 ft <- width(ft, j = 4, width = 1.75)
 
 # Display the table
-ft
+ft %>% set_table_properties(opts_pdf=list(fonts_ignore=T))
+
 ```
 
 ## Defining Escalation/De-escalation
