@@ -1,5 +1,5 @@
 ---
-title: "What is Escalation?: Measuring Crisis Dynamics in International Relations with Human and Machine Generated Event Data"
+title: "What is Escalation? Measuring Crisis Dynamics in International Relations with Human and LLM Generated Event Data"
 authors:
   - name: Rex W. Douglass
     affiliation: University of California, San Diego
@@ -11,26 +11,40 @@ authors:
     affiliation: Vanderbilt University
   - name: Thomas Leo Scherer
     affiliation: University of California, San Diego
-highlight-style: pygments
+date: "2024-01-17" # You can set a specific date or use `r Sys.Date()` for the current date in R Markdown
+#https://github.com/kapsner/authors-block
+filters:
+  - authors-block
+#highlight-style: pygments
 format:
-  html: 
-    code-fold: true
-    html-math-method: katex
+#  html: 
+#    code-fold: true
+#    html-math-method: katex
+#Extension that allows you to have author blocks in a docx doc
+#https://github.com/kapsner/authors-block
+#quarto add kapsner/authors-block
 #  docx:
 #    code-fold: false
-#  pdf: default
+  pdf:
+    keep-tex: true
+#    fontfamily: inter
+    fontfamilyoptions: type1
 #  arxiv-pdf:
 #    keep-tex: true
+#    number_sections: false
+#    authorcols: true
 editor: source
+pdf-engine: pdflatex
 execute:
   output: false
   error: false
   echo: false
   warnings: false
-  cache: false
+  cache: true
   eval: false
 embed-resources: true
 bibliography: ICBintro.bib
+abstract: When a dangerous international crisis begins, leaders need to know whether their next move is going to resolve the dispute or amplify it out of control. Theories of conflict have mainly served to deepen the confusion, revealing fighting, bargaining, and signaling to be high-dimensional and subtle equilibrium behaviors with deeply contextual consequences. Should a leader communicate resolve through aggressive acts, avoid spirals through accommodation, or focus on ensuring the possibility of a bargain? We offer a data-driven empirical solution to this logjam in the form of a new large-scale analysis of actions taken within 475 crises. We combine two complimentary measurement projects, the human-coded International Crisis Behavior Events (ICBe) dataset and the new machine-coded ICBeLLM. We model directly whether an action tends to shorten or extend the length of a crisis. The result is a directly interpretable measure of the latent escalatory/deescalatory nature of each action leaders have chosen over the last century.
 ---
 
 ```{python, eval=F}
@@ -38,17 +52,1012 @@ bibliography: ICBintro.bib
 !sudo apt install lmodern
 ```
 
-Word Count: 8923
+```{r, eval=T, cache=F}
+set.seed(42)
+library(tidyverse)
+library(tictoc)
+```
 
-# Abstract
+```{r, eval=T}
 
-When a dangerous international crisis begins, leaders need to know whether their next move is going to resolve the dispute or amplify it out of control. Theories of conflict have mainly served to deepen the confusion, revealing fighting, bargaining, and signaling to be high-dimensional and subtle equilibrium behaviors with deeply contextual consequences. Should a leader communicate resolve through aggressive acts, avoid spirals through accommodation, or focus on ensuring the possibility of a bargain? We offer a data-driven empirical solution to this logjam in the form of a new large-scale analysis of actions taken within 475 crises. We combine two complimentary measurement projects, the human-coded International Crisis Behavior Events (ICBe) dataset and the new machine-coded ICBeLLM. We model directly whether an action tends to shorten or extend the length of a crisis. The result is a directly interpretable measure of the latent escalatory/deescalatory nature of each action leaders have chosen over the last century.
+#https://docs.google.com/spreadsheets/d/1h1ooSdlnep4HTwzAyKK05DX7h0cCVOYb4rQzqg1qGdo
+#https://docs.google.com/spreadsheets/d/1QP2TQjY8Ipqeb_k2SbLkZBcHg-p0GRvO1atrnh5EChc/edit?usp=sharing
+#https://docs.google.com/spreadsheets/d/1QP2TQjY8Ipqeb_k2SbLkZBcHg-p0GRvO1atrnh5EChc/edit?usp=sharing
+library(tidyverse)
+library(tictoc)
+sheet_id <- "1QP2TQjY8Ipqeb_k2SbLkZBcHg-p0GRvO1atrnh5EChc" # Replace this with your actual sheet ID
+csv_link <- paste0("https://docs.google.com/spreadsheets/d/", sheet_id, "/gviz/tq?tqx=out:csv&sheet=", "prompts")
+# Read CSV data from the link
+llm_icbe_actors_handlabeled <- read_csv(csv_link) %>% janitor::remove_empty( "cols")
 
-# 1.0 Introduction
+#llm_icbe_actors_handlabeled  <- read_csv("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_in/llm_icbe_actors_handlabeled.csv", na = "")
 
-What does it mean that an international crisis is escalating, and what actions within a crisis are escalatory? This question haunts recent and ongoing crises such as missile tests on the Korean Peninsula, Russian incursions in Ukraine, partial state death in Syria, and Chinese claims of sovereignty in the South and East China Seas. In these situations, leaders face a shared fundamental question about how to navigate a dangerous situation without accidentally sliding over the line into a larger-than-desired conflict (Snyder and Diesing 1977; Slantchev 2005). Often leaders must make decisions with limited time and inadequate information (Jervis 1976, p. 95). What guidance can we offer to help maintain peace and stability? Can we predict how states will react to specific events during crises? Can we recommend policies or actions that are most likely to lead to success without being destabilizing? In short, what empirical evidence can we bring to bear on the practical questions of crisis management?[^1]
+llm_icbe_actors_handlabeled_clean <- llm_icbe_actors_handlabeled %>% dplyr::select(value,new_name,wikidata) %>% distinct() %>% filter(!is.na(wikidata))
 
-[^1]: Consistent findings in the context of cross-domain deterrence and escalation using the ICBe data are described in Gannon (2022).
+#mapping to qcodes
+qcodes <- bind_rows(
+  llm_icbe_actors_handlabeled_clean %>% dplyr::select(value,value_normalized=new_name,value_qcode=wikidata),
+  llm_icbe_actors_handlabeled_clean %>% dplyr::select(value=new_name,value_normalized=new_name,value_qcode=wikidata)
+) %>% distinct() %>% filter(!value_qcode %>% str_detect(";")) #%>%
+  #mutate(value=value %>% tolower() %>% trimws() )
+
+```
+
+```{r, eval=T, cache=T}
+
+#A lot of our poor recall is just errors.
+#interact_location in the ICBe data has country names sometimes instead of the 5 options, I don't know why.
+library(tidyverse)
+library(stringi)
+library(glue)
+
+#67,452
+ICBeLLM <- read_csv("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_out/icbe_all_codings.csv", na = "")
+
+#822,868
+ICBeLLM_long_clean <- ICBeLLM %>% select(-chunk,-chunk_type,  -events)  %>% #crisno, sentence_number, sentence, thought_leaf:interact_territory
+                      mutate_all(as.character) %>% #across(thought_leaf:interact_territory
+                       pivot_longer(cols=-c('crisno',  'sentence',"event_number","event_number_subevent")) %>% #use subevent here but not below #'sentence_number' we exclude 'sentence_number' here because we need to allign it below
+                       filter(!is.na(value)) %>%
+                       filter(!name %>% str_detect('prompt')) %>%
+                       mutate( value = value %>% strsplit(";") ) %>% #here's where we split on ;
+                       unnest(value) %>%
+                       #recode some of the actor labels to match icbe
+                       left_join(qcodes %>%  distinct()   ) %>%
+                       mutate(value_normalized=ifelse(!is.na(value_normalized),value_normalized,value  )) %>%
+                       distinct() %>%
+                       #end recodes
+                       filter(!name %in% c("actors","actors_all","actors_cleaned","chunk_number","event","sentence_list")) %>%
+                       mutate(email_id="LLM") #%>%
+
+llm_actors <- ICBeLLM_long_clean %>% 
+              dplyr::filter( name %in% c('think_actor_a','say_actor_a','say_actor_b','do_actor_a','do_actor_b')) %>% 
+              dplyr::select(value) %>% distinct() %>%
+              filter(nchar(value)>1)
+  
+#New plan we're going to filter to only expert codings.
+#Dead sentences have no actors listed in the wide, just use that.
+#ICBe_V1.1_long <- readRDS("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_in/ICBe_V1.1_long.Rds") #I used long and not clean before for some reason
+ICBe_V1.1_long <- readRDS("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_in/ICBe_V1.1_long_clean.Rds")
+ICBe_V1.1_long %>% count(email_id ) #from 118 people
+ICBe_V1.1_long %>% count(varname_normalized )
+dim(ICBe_V1.1_long) #993740 #692,574 almost 700k tokens
+
+#Maybe we have to go to qcodes instead?
+
+#ICBe_V1.1_long %>% dplyr::select(varname_normalized,value_normalized,value_qcode) %>% distinct() %>% filter(!duplicated(value_normalized)) %>% arrange() # filter(!is.na(value_qcode))
+#llm_icbe_actors %>% write_csv("/home/skynet3/Downloads/llm_icbe_actors.csv")
+
+
+idbe_do_leaf <- ICBe_V1.1_long %>%
+                filter(varname_normalized %in% 
+                         c('act_cooperative','act_deescalate','act_escalate','act_uncooperative',
+                           #'do_kind', #this the escalatory, coop, etc.
+                           'interact_decreasecoop','interact_deescalate','interact_escalate','interact_increasecoop') ) %>%
+                mutate(varname_normalized="do_leaf") %>%
+                group_by(email_id, crisno, sentence_number_int_aligned, sentence_span_text, event_number_int, varname_normalized) %>%  #value_normalize
+                summarise(value_normalized= value_normalized %>% unique() %>% paste0(collapse=";")) %>%
+                separate_rows(value_normalized , sep=";") %>%
+                ungroup() %>%
+                distinct() 
+  
+ICBe_V1.1_long_clean <-  bind_rows(
+                        idbe_do_leaf,
+                         ICBe_V1.1_long %>% filter(!varname_normalized %in% c('act_cooperative','act_deescalate','act_escalate','act_uncooperative',
+                                                                              'do_kind', 
+                                                                              'interact_decreasecoop','interact_deescalate','interact_escalate','interact_increasecoop') )
+                      ) %>%
+                        #Convert some llm names into the dumb icbe equivalents
+                         mutate(varname_normalized = case_when(
+                            varname_normalized ==  "do_kind" ~ "do_leaf",
+                            varname_normalized == "thinkkind" ~ "thought_leaf",
+                            varname_normalized == "sayintkind" ~ "speech_leaf"  ,
+                            TRUE ~ varname_normalized  # This line keeps all other values as they are
+                          )) %>% distinct() %>%
+                        left_join(qcodes %>% dplyr::select(value_normalized=value,value_normalized2=value_normalized,value_qcode2=value_qcode) ) %>%
+                        mutate(value_normalized=ifelse(!is.na(value_normalized2),value_normalized2,value_normalized)) %>%
+                        mutate(value_qcode=ifelse(!is.na(value_qcode2),value_qcode2,value_qcode)) %>%
+                        dplyr::select(-value_qcode2,-value_normalized2)
+  
+  
+                                             
+ICBe_V1.1_long_clean %>% count(varname_normalized )
+
+
+
+icbe_actors <- ICBe_V1.1_long_clean %>% 
+               dplyr::filter( varname_normalized %in% c('think_actor_a','say_actor_a','say_actor_b','do_actor_a','do_actor_b')) %>%
+               dplyr::select(value_normalized,value_qcode) %>% distinct()
+
+llm_icbe_actors <- llm_actors %>% mutate(llm=1) %>% full_join(icbe_actors %>% mutate(icbe=1) %>% rename(value=value_normalized))
+llm_icbe_actors %>% write_csv("/home/skynet3/Downloads/llm_icbe_actors.csv")
+
+
+#Combine both by turning ICBeLLM into ICBe
+icbe_llm_long <- bind_rows(
+  ICBeLLM_long_clean %>% dplyr::select(email_id,crisno,sentence, event_number ,event_number_subevent,varname_normalized=name,value_normalized) %>% mutate_all(as.character) %>% distinct(),
+  ICBe_V1.1_long_clean %>% dplyr::select(email_id,crisno,sentence_number=sentence_number_int_aligned,sentence=sentence_span_text,event_number=event_number_int,varname_normalized,value_normalized) %>% mutate_all(as.character) %>% distinct()
+) %>% distinct() %>%
+  mutate(value_normalized = value_normalized %>% tolower() %>% trimws()) %>% #just to keep my life easier I'm going to lower case all the values just to make sure the merges happen smoother
+  group_by(crisno,sentence) %>%
+    mutate(sentence_number=sentence_number %>% max(na.rm=T)) %>%
+  ungroup()
+  
+dim(icbe_llm_long) #1,788,032 #1509719 #1,444,006 #1,532,520 we roughly double the number of tokens collected.
+
+#this is somehow slow
+##1,283,964 #664,502
+icbe_llm_long_votes <- icbe_llm_long %>%
+                       distinct() %>%
+                       mutate(votes_llm    = email_id %>%   str_detect("LLM")   ) %>%
+                       mutate(votes_expert = email_id %>%  str_detect("expert")   ) %>%
+                       mutate(votes_novice = !(email_id %>%  str_detect("expert|LLM")   ))  %>%
+                      
+                       group_by(crisno,sentence,varname_normalized,value_normalized) %>% #we throw away all notion of events here and just ask how many people voted for that sentence-token completely independent of the context
+                       filter(!duplicated(email_id)) %>% #you can have multiple events per sentence, we only want to count one vote per email-sentence-token
+                       mutate(
+                         votes_llm= votes_llm %>% sum(na.rm=T),
+                         votes_expert= votes_expert %>% sum(na.rm=T),
+                         votes_novice= votes_expert %>% sum(na.rm=T)
+                       ) %>%
+                         #mutate(votes_novice = (!(email_id %>% unique() %>% str_detect("expert|LLM"))) %>% sum() ) %>%
+                         #mutate(sentence_number = max(sentence_number, na.rm=T) ) %>% 
+                       ungroup() #We don't summarise, keep everything in original shape
+  
+icbe_llm_long_votes %>% count(votes_llm,votes_expert) #52,046 #77,015 votes where the LLM saves it. But that's really only like 30k tokens because in this version it's still individual votes
+
+
+#407,188 #419,683
+icbe_llm_long_votes_keep <- icbe_llm_long_votes %>% 
+                            filter(email_id %>%  str_detect("expert|LLM")) %>%
+                            #filter( (votes_llm + votes_expert ) >=2  |  (votes_expert==1 & votes_novice>0   )    ) #Ok so 2 expert votes, or 1 expert vote and 1 llm vote, or 1 expert vote and 1 novice vote
+                            #filter( (votes_llm + votes_expert + (votes_novice>0)  ) >=2      ) #Require either 2 expert votes, or and LLM vote+ either an expert or novice vote
+                            filter( (votes_llm+votes_expert)>=2      )  #keeping any with at least 2 votes (expert or llm). Keep in mind the numbers won't make sense for quite some time
+                            #for calculating the difference between the experts only and experts+llm
+                            #filter((votes_expert)>=2)  #keeping any with at least 2 votes (expert or llm). Keep in mind the numbers won't make sense for quite some time
+
+icbe_llm_long_votes_keep_actors <- icbe_llm_long_votes_keep %>%  
+                                   mutate(say_actor_a= ifelse(varname_normalized %in% c('say_actor_a'), value_normalized, NA)) %>%
+                                   mutate(say_actor_b= ifelse(varname_normalized %in% c('say_actor_b'), value_normalized, NA)) %>%
+                                   mutate(think_actor_a= ifelse(varname_normalized %in% c('think_actor_a'), value_normalized, NA)) %>%
+                                   mutate(do_actor_a= ifelse(varname_normalized %in% c('do_actor_a'), value_normalized, NA)) %>%
+                                   mutate(do_actor_b= ifelse(varname_normalized %in% c('do_actor_b'), value_normalized, NA)) %>%
+                                   #we're going to leave out sentence number
+                                   #I think we're folding subebevents up into the same actor list. So the event could be say actor, and subevent the actor
+                                   group_by(email_id, crisno, sentence, event_number ) %>%  #event_number_subevent . We flatten subevents for LLM here. We still keep email and events separated. Our next grouping will be on actors
+                                   fill(do_actor_a,do_actor_b,say_actor_a,say_actor_b,think_actor_a, .direction ="updown") %>% 
+                                   distinct()
+
+
+#Note the sentence numbers are broken!!!!
+#29,667
+icbe_llm_long_votes_keep_actors_events <- icbe_llm_long_votes_keep_actors %>%  ungroup() %>%
+                                          dplyr::select(-email_id,-event_number,-event_number_subevent) %>% distinct() %>%
+                                          distinct() %>%
+                                          filter(!varname_normalized %in% c("think_actor_a", "say_actor_a", "say_actor_b", "do_actor_a", "do_actor_b")) %>%
+                                          filter(!varname_normalized %in% c("crisno", "sentence_number", "sentence")) %>%
+                                          pivot_wider(names_from = varname_normalized,
+                                                    values_from = value_normalized,
+                                                    id_cols = c("crisno", "sentence_number", "sentence", "think_actor_a", "say_actor_a", "say_actor_b", "do_actor_a", "do_actor_b"),
+                                                    values_fn=~ paste0(.x, sep=";", collapse=";") ) %>% 
+                                          mutate_at(vars(crisno,sentence_number), as.numeric) %>%
+                                          arrange(crisno, sentence_number)
+
+#15,487 actor-behavior pairs when you throw away empty sentences
+#9,358 without the LLM
+icbe_llm_long_votes_keep_actors_events_small <- icbe_llm_long_votes_keep_actors_events %>%
+                                                dplyr::select(-starts_with("condition"),
+                                                              -event_type,
+                                                              -sentence_events,
+                                                              -raterconfidence_reason_survey,
+                                                              -raterconfidence_reason,
+                                                              -raterconfidence,
+                                                              -think_sentence_events,
+                                                              -consequence) %>%
+                                                mutate(across(where(is.character), ~str_remove(., ";$"))) %>%
+                                                mutate(across(where(is.character), ~str_remove(., "^;"))) %>%
+                                                mutate(across(where(is.character), ~str_replace_all(., ";+",";"))) %>%
+  dplyr::select(crisno,sentence_number,sentence,think_actor_a,thought_leaf,say_actor_a,say_actor_b,speech_leaf,do_actor_a,do_actor_b,do_leaf, everything()) %>%
+  filter(!is.na(thought_leaf) | !is.na(speech_leaf) | !is.na(do_leaf) )
+
+#19,252
+#27,866
+#11,374
+#17,289
+#24,736
+#icbe_llm_long_votes_keep_actors_events_small %>% filter(!is.na(think_actor_a) | !is.na(say_actor_a) | !is.na(say_actor_b) | !is.na(do_actor_a) | !is.na(do_actor_b)  )
+
+#1,111,084 tokens
+
+
+
+
+```
+
+```{r, eval=F}
+
+#This doesn't contain any known not events.
+df <- icbe_llm_long_votes_keep_actors_events_small %>% 
+  dplyr::select(sentence , thought_leaf , think_actor_a ,  speech_leaf, say_actor_a , say_actor_b , do_leaf, do_actor_a , do_actor_b) %>%
+  mutate(actor_count = 8 - (is.na(thought_leaf) +  is.na(think_actor_a) + is.na(speech_leaf) + is.na(say_actor_a) + is.na(say_actor_b) + is.na(do_leaf) + is.na(do_actor_a) + is.na(do_actor_b) )) %>%
+  arrange(desc(actor_count)) %>%
+  filter(!duplicated(sentence)) %>%
+  filter(actor_count>=2) %>%
+  filter(!(!is.na(do_leaf) & is.na(do_actor_a))) %>%
+  filter(!(!is.na(do_leaf) & is.na(do_actor_b))) %>%
+  filter(!(!is.na(do_actor_a) & is.na(do_leaf))) %>%
+  filter(!(!is.na(speech_leaf) & is.na(say_actor_a))) %>%
+  filter(!(!is.na(speech_leaf) & is.na(say_actor_b))) %>%
+  filter(!(!is.na(say_actor_a) & is.na(speech_leaf))) %>%
+  filter(!(!is.na(thought_leaf) & is.na(think_actor_a))) %>%
+  filter(!(!is.na(think_actor_a) & is.na(thought_leaf))) %>%
+  mutate(random=runif(n())) %>%
+  mutate(across(contains("leaf"), ~ str_to_title(.))) %>%
+  mutate(across(contains("actor"), ~ str_to_title(.))) %>%
+  arrange(random) %>%
+  left_join( ICBeLLM %>% dplyr::select(chunk,sentence) %>% distinct() ) %>%
+  filter( actor_count==8 |
+          (actor_count==6 & !is.na(speech_leaf) & !is.na(do_leaf))  |
+          (actor_count==3 & !is.na(do_leaf)) |
+          (actor_count==2 & !is.na(thought_leaf))                   
+          ) %>%
+  group_by(actor_count,do_leaf,speech_leaf,thought_leaf) %>%
+    filter(row_number() < 2) %>%
+    #filter(random<0.04) %>%
+  ungroup() %>%
+  filter(row_number() < 101) %>%
+  dplyr::select(-actor_count , -random) 
+
+
+df %>% mutate(
+  example =
+    paste0(sentence,"\n",
+           "{ ", " }")
+)
+
+df_final <- df %>%
+  mutate(
+    example = paste0(
+      "Context: \"", chunk, "\"\n", 
+      "Specific Sentence: \"", sentence, "\"\n", 
+      "Event Revealed by Specific Sentence: ", "{ ", 
+      "\"Perception\" : \"", thought_leaf, "\" , ",
+      "\"Perceiver\" : \"", think_actor_a, "\" , ",
+      "\"Speech\" : \""  , speech_leaf, "\" , ",
+      "\"Speaker\" : \"", say_actor_a, "\" , ",
+      "\"Audience\" : \"", say_actor_b, "\" , ",
+      "\"Physical Action\" : \"" , do_leaf, "\" , ",
+      "\"Actor\" : \"", do_actor_a, "\" , ",
+      "\"Target\" : \"", do_actor_b, "\" } \n" #,
+      #"Coding Justification : \n\n"
+    )   %>% 
+    str_replace_all("\"NA\"", "null")
+  )
+
+df_final %>% pull(example) %>% writeLines("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_out/icbe_actor_examples.txt")
+
+```
+
+```{r, eval=T}
+
+#Now need to start working on ordering and length harder
+
+
+#We're going to call the sentence the unit of time. Things described in the same sentence are 0 apart.
+#Ok here's the idea. We're going to put all of this on the left hand side. 7 outcomes. And then on the right hand side, we're going to one hot encode all of these and make the features # of sentences since.
+#17,289
+
+library(fastDummies); #install.packages("fastDummies")
+#7,126
+x_all <-  icbe_llm_long_votes_keep_actors_events_small %>% 
+              filter(!is.na(think_actor_a) | !is.na(say_actor_a) | !is.na(say_actor_b) | !is.na(do_actor_a) | !is.na(do_actor_b)  ) %>% #require at least one actor
+              filter(!is.na(thought_leaf) | !is.na(speech_leaf) | !is.na(do_leaf)   ) %>% #and at least one action
+              dplyr::select(crisno , sentence_number ,thought_leaf,speech_leaf,do_leaf,interact_domains,interact_units,interact_territory,interact_forces, interact_fatalities) %>%
+              pivot_longer(
+                cols = !c(crisno, sentence_number), # Specify all columns except crisno and sentence_number
+                names_to = "variable", # Name of the new column for variable names
+                values_to = "value"    # Name of the new column for values
+              ) %>%
+              filter(!is.na(value)) %>%
+              separate_rows(value, sep=";") %>%
+              mutate(value=value %>% trimws()) %>%
+              filter(!is.na(value)) %>%
+              mutate(variable_value=paste0(variable,"__",value)) %>%
+              dplyr::select(-variable,-value) %>%
+              dummy_cols("variable_value", remove_first_dummy = F, remove_selected_columns=T) %>%
+              group_by(crisno, sentence_number) %>%
+              summarise_all(max, na.rm=T) %>% 
+              ungroup()
+
+#Alright here we go. 1 million obs. Unit of obs is the crisis-sentence-token, Y is 0 or 1 for whether that token happened in that sentence.
+#1,047,522
+y_all_long <- x_all %>%
+              pivot_longer(
+                cols = -c(crisno, sentence_number), # Exclude ID columns from the pivot
+                names_to = "variable", # Name of the new column for variable names
+                values_to = "Y"    # Name of the new column for values
+              )
+
+calculate_counts <- function(x) {
+  # Replace 0s with NAs and then replace NAs with the cumulative count since last non-NA
+  na_if(x, 0) %>% 
+    fill(., .direction = "down") %>% 
+    with(., ifelse(is.na(.), NA, seq_along(.) - .))
+}
+
+#7,126
+x_all_timesince <- y_all_long %>%
+                   arrange(crisno, variable, sentence_number ) %>%
+                   group_by(crisno, variable) %>% # Group by crisno
+                      mutate(Y=Y %>% cumsum()) %>%
+                   ungroup() %>%
+                   mutate(time_since=1) %>%
+                   group_by(crisno, variable,Y) %>% # Group by crisno
+                      mutate(time_since=time_since %>% cumsum()) %>%
+                   ungroup() %>%
+                   mutate(time_since=time_since -1) %>%
+                   mutate(time_since=ifelse(Y==0, 100, time_since))  %>%  #set it to a very large value, so smaller means more recent
+                   select(-Y) %>% 
+                   arrange(crisno , variable,sentence_number) %>%
+                   #group_by(crisno , variable) %>%
+                   #  mutate(time_since=time_since %>% lag()) %>% #note to self we're not going to lag anymore. We're going to predict the time until end of crisis as a function of what happens now
+                   #ungroup() %>%
+                   pivot_wider(names_from = variable, values_from = time_since, values_fill = list(time_since = 100))
+
+
+yx_all <- y_all_long %>% left_join(x_all_timesince) %>% na.omit() %>% mutate(variable=variable %>% as.factor()) %>%
+            arrange(crisno,variable, sentence_number) %>%
+            group_by(crisno,variable) %>%
+            mutate(t=row_number()) %>%
+            ungroup()
+dim(yx_all) #931140 #997640    144
+
+
+#yx_all %>% dplyr::select(crisno,variable, sentence_number,t)
+
+              
+```
+
+```{r, eval=T, fig.width=12, fig.height=14, output=F}
+
+y_all_long %>% filter(Y==1) %>% 
+  group_by(crisno) %>%
+    mutate(sentence_number=sentence_number-min(sentence_number)) %>%
+    mutate(sentence_number=sentence_number/max(sentence_number)) %>%
+  ungroup() %>%
+  group_by(variable) %>%
+  summarise(sentence_number =sentence_number %>% mean())
+
+
+df = y_all_long %>% filter(Y==1) %>% 
+  group_by(crisno) %>%
+    mutate(sentence_number=sentence_number-min(sentence_number)) %>%
+    mutate(sentence_number=sentence_number/max(sentence_number)) %>%
+  ungroup() 
+library(betareg) #install.packages('betareg')
+library(lmtest) #install.packages('lmtest')
+library(sandwich) #install.packages('sandwich')
+
+library(glm2) #install.packages('glm2')
+
+
+
+# Fit the model
+model <- glm(cbind(sentence_number, 1 - sentence_number) ~ variable, 
+             family = binomial(link = "logit"), 
+             data = df)
+
+library(sandwich)
+library(lmtest)
+# Compute robust standard errors
+robust_se <- vcovHC(model, type = "HC1", cluster = ~ crisno)
+mycoefs <- coeftest(model, vcov = robust_se)
+#summary(coeftest(model, vcov = robust_se))
+#predicted_values <- predict(model, type = "response")
+
+
+# Creating a dataframe
+logit_estimates <- data.frame(Estimate = mycoefs[,1], 
+                    std_error = mycoefs[,2], 
+                    t_value  = mycoefs[,3], 
+                    p_value = mycoefs[,4])
+
+# Calculate the confidence intervals on the logit scale
+logit_ci_lower <- logit_estimates$Estimate - 1.96 * logit_estimates$std_error
+logit_ci_upper <- logit_estimates$Estimate + 1.96 * logit_estimates$std_error
+
+# Transform the confidence intervals back to the probability scale
+ci_lower <- 1 / (1 + exp(-logit_ci_lower))
+ci_upper <- 1 / (1 + exp(-logit_ci_upper))
+
+# Combine with predicted probabilities
+predicted_probabilities <- 1 / (1 + exp(-logit_estimates$Estimate))
+result <- data.frame(
+  PredictedProbability = predicted_probabilities,
+  CILower = ci_lower,
+  CIUpper = ci_upper
+)
+
+```
+
+```{r, eval=T, fig.width=12, fig.height=14, output=F}
+
+temp <- df %>%   #mutate(variable=rownames(mycoefs)) %>%
+  group_by(variable) %>%
+  summarise(sentence_number=mean(sentence_number)) %>% ungroup() %>%
+  #filter(!variable %in% "(Intercept)") %>%
+  #tibble::rownames_to_column(var = "variable") %>%
+
+  mutate(color_category = case_when(
+    #grepl("action", variable) ~ "black",
+    grepl("speech", variable) ~ "blue",
+    grepl("thought", variable) ~ "darkorange",
+    grepl("fatalities|forces_|domains_|territory_|units_", variable) ~ "purple",
+    TRUE ~ "black"  # Default color
+  )) %>%
+  mutate(variable = variable %>% str_replace_all("variable_value_","")) %>%
+  mutate(variable = variable %>% str_replace_all("^variable","")) %>%
+  mutate(variable = variable %>% str_replace_all("leaf__","")) %>%
+  mutate(variable = variable %>% str_replace_all("interact_","")) %>%
+  mutate(variable = variable %>% str_replace_all("do_","")) %>%
+  mutate(variable = variable %>% str_replace_all("thought_","")) %>%
+  mutate(variable = variable %>% str_replace_all("speech_","")) %>%
+  mutate(variable = variable %>% str_replace_all("domains__|units__|territory__","")) %>%
+  mutate(variable = variable %>% str_replace_all("forces__","(forces) ")) %>%
+  mutate(variable = variable %>% str_replace_all("fatalities__","(fatalities) ")) %>%
+  
+  mutate(aggression_change = case_when(
+    variable %in% c('annex', 'assassination', 'assert autonomy against', 'assert political control over', 
+                    'attack', 'battle/clash', 'blockade', 'bombard', 'border violation', 'break off negotiations', 
+                    'continuation of previous fighting', 'coup', 'declaration of war', 'deployment to area', 
+                    'end access', 'expel', 'fortify', 'human rights violation', 'imprison', 'invasion/occupation', 
+                    'join ongoing war', 'join war on behalf',  'mass killing', 'mobilization', 
+                    'no fly zone', 'propaganda', 'raise in alert', 'restrict rights', 'riot', 'show of force', 
+                    'strike',  'terrorism', 'violate terms of treaty', 'weapons test', "protest",'withdraw diplomats','end unspecified aid','inspections', 'end unspecified cooperation',
+                    'end economic aid', 'end economic cooperation', 'exercise', 
+                    'end humanitarian aid', 'terminate treaty','allow access') ~ 'increase',
+    variable %in% c('cease fire', 'cede territory', 'de-mobilization', 'declaration of peace', 'decolonize', 
+                    'discussion', 'economic cooperation', 
+                    'end exercise',  'end military cooperation', 'end riot',  
+                     'end weapons test', 'formal military alliance', 
+                    'general political support', 'humanitarian aid', 'institutions change', 
+                    'intelligence cooperation', 'leadership change', 'leave alliance', 'mediation', 'meeting', 
+                    'military aid', 'military cooperation', 'mutual defense pact', 'natural conclusion of diplomacy', 
+                    'political succession', 'provide rights', 'reduce control over', 'reduce human rights violation', 
+                    'reduce terrorism', 'remove fortify', 'retreat', 'settle dispute', 'sign formal agreement',   'withdraw from area', 
+                    'withdraw from war',"end blockade","unspecified cooperation",'lower alert','withdraw behind border','ally','surrender') ~ 'decrease',
+    TRUE ~ 'neutral'
+  )) %>%
+  mutate(color_category = ifelse(aggression_change %in% "increase","red",color_category)) %>%
+  mutate(color_category = ifelse(aggression_change %in% "decrease","forestgreen",color_category)) %>%
+  mutate(category = "Error") %>%
+  mutate(category = ifelse(color_category %in% "red","Escalate/Uncoop",category)) %>%
+  mutate(category = ifelse(color_category %in% "forestgreen","De-escalate/Coop",category)) %>%
+  mutate(category = ifelse(color_category %in% "blue","Speech",category)) %>%
+  mutate(category = ifelse(color_category %in% "darkorange","Thought",category)) %>%
+  mutate(category = ifelse(color_category %in% "purple","Details",category)) %>%
+  group_by(variable) %>%
+    mutate(sentence_number_mean=mean(sentence_number)) %>%
+  ungroup() %>%
+  arrange(category,variable)
+
+p_Figure1 <- temp %>%
+  mutate(variable = fct_reorder(variable, sentence_number, .fun = mean)) %>%
+  ggplot() +
+  #geom_point(aes(x=sentence_number,y=variable), size=0.5) +
+  geom_point(aes(x=sentence_number_mean,y=variable, color=color_category), size=1.0) +
+  #facet_wrap(facets=~color_category,ncol=1, scales="free_y", strip.position = "right")
+  facet_grid(rows = vars(category), scales = "free_y", space = "free_y")  +  # Adds error bars
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotates x-axis labels for readability
+  labs(y = "Behavior", 
+       x = "Early <------------------------------------------------------------> Late\nMean Relative Location in Crisis Narrative", 
+       title = "When Behaviors Tend to Happen within a Crisis",
+       subtitle="Mean Location within Narrative Grouped by Behavior Type") +
+  #coord_flip()  +
+  scale_color_identity() +
+  theme_bw()
+  #theme(axis.text.y = element_text( colour = temp$color_category ) )  #angle = 0, hjust = 0,
+
+ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure1_Behavior_Locations.pdf", plot = p_Figure1, width = 10, height = 14)
+
+
+```
+
+
+
+
+```{r, eval=F, fig.width=12, fig.height=14, output=T}
+
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(ggtext)
+#install.packages("ggtext")
+# Plotting
+temp <- result %>%
+  mutate(variable=rownames(mycoefs)) %>%
+  filter(!variable %in% "(Intercept)") %>%
+  #tibble::rownames_to_column(var = "variable") %>%
+
+  mutate(color_category = case_when(
+    #grepl("action", variable) ~ "black",
+    grepl("speech", variable) ~ "blue",
+    grepl("thought", variable) ~ "darkorange",
+    grepl("fatalities|forces_|domains_|territory_|units_", variable) ~ "purple",
+    TRUE ~ "black"  # Default color
+  )) %>%
+  mutate(variable = variable %>% str_replace_all("^variable","")) %>%
+  mutate(variable = variable %>% str_replace_all("variable_value_","")) %>%
+  mutate(variable = variable %>% str_replace_all("leaf__","")) %>%
+  mutate(variable = variable %>% str_replace_all("interact_","")) %>%
+  mutate(variable = variable %>% str_replace_all("do_","")) %>%
+  mutate(variable = variable %>% str_replace_all("thought_","")) %>%
+  mutate(variable = variable %>% str_replace_all("speech_","")) %>%
+  mutate(variable = variable %>% str_replace_all("domains__|units__|territory__","")) %>%
+  mutate(variable = variable %>% str_replace_all("forces__","(forces) ")) %>%
+  mutate(variable = variable %>% str_replace_all("fatalities__","(fatalities) ")) %>%
+  
+  mutate(aggression_change = case_when(
+    variable %in% c('annex', 'assassination', 'assert autonomy against', 'assert political control over', 
+                    'attack', 'battle/clash', 'blockade', 'bombard', 'border violation', 'break off negotiations', 
+                    'continuation of previous fighting', 'coup', 'declaration of war', 'deployment to area', 
+                    'end access', 'expel', 'fortify', 'human rights violation', 'imprison', 'invasion/occupation', 
+                    'join ongoing war', 'join war on behalf',  'mass killing', 'mobilization', 
+                    'no fly zone', 'propaganda', 'raise in alert', 'restrict rights', 'riot', 'show of force', 
+                    'strike',  'terrorism', 'violate terms of treaty', 'weapons test', "protest",'withdraw diplomats','end unspecified aid','inspections', 'end unspecified cooperation',
+                    'end economic aid', 'end economic cooperation', 'exercise', 
+                    'end humanitarian aid', 'terminate treaty') ~ 'increase',
+    variable %in% c('cease fire', 'cede territory', 'de-mobilization', 'declaration of peace', 'decolonize', 
+                    'discussion', 'economic cooperation', 
+                    'end exercise',  'end military cooperation', 'end riot',  
+                     'end weapons test', 'formal military alliance', 
+                    'general political support', 'humanitarian aid', 'institutions change', 
+                    'intelligence cooperation', 'leadership change', 'leave alliance', 'mediation', 'meeting', 
+                    'military aid', 'military cooperation', 'mutual defense pact', 'natural conclusion of diplomacy', 
+                    'political succession', 'provide rights', 'reduce control over', 'reduce human rights violation', 
+                    'reduce terrorism', 'remove fortify', 'retreat', 'settle dispute', 'sign formal agreement',   'withdraw from area', 
+                    'withdraw from war',"end blockade","unspecified cooperation",'lower alert','withdraw behind border','ally','surrender') ~ 'decrease',
+    TRUE ~ 'neutral'
+  )) %>%
+  mutate(color_category = ifelse(aggression_change %in% "increase","red",color_category)) %>%
+  mutate(color_category = ifelse(aggression_change %in% "decrease","forestgreen",color_category))
+
+
+temp2 <- temp %>% dplyr::select(PredictedProbability, variable, color_category) %>% distinct() %>% arrange(PredictedProbability)
+  
+temp %>%
+  ggplot( aes(x = reorder(variable, PredictedProbability), y = PredictedProbability)) +
+  geom_point(aes(color = color_category)) +  # Adds points for means
+  geom_errorbar(aes(ymin = CILower, ymax =  CIUpper,color = color_category), width = 0.2) +  # Adds error bars
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotates x-axis labels for readability
+  labs(x = "Behavior", 
+       y = "Early <-----------------------------------------------------------------------------------------------------------------------------------------------> Late\nMean Relative Location in Crisis Narrative", 
+       title = "When Behaviors Tend to Happen within a Crisis",
+       subtitle="Fractional Logit (95% CI clustered on Crisis)\nThoughts (orange); Speech (blue); Escalatory Actions (red); De-escalatory Actions (green); Action Details (Purple)") +
+  coord_flip()  +
+  scale_color_identity() +
+  theme(axis.text.y = element_text( colour = temp2$color_category) )  #angle = 0, hjust = 0,
+  
+  
+```
+
+```{r, eval=T, fig.width=12, fig.height=14, output=F}
+
+library(caret)
+library(fastDummies); #install.packages("fastDummies")
+#x_all 
+y_all_timeuntil <- x_all %>% dplyr::select(crisno, sentence_number) %>%
+                   arrange(crisno, sentence_number) %>%
+                   group_by(crisno) %>%
+                      mutate(Y=  n() - row_number() ) %>%  #we have to switch to number of events because the sentence numbers aren't the number of actual events
+                      #mutate(Y =  log(Y+1) ) %>%  #we have to switch to number of events because the sentence numbers aren't the number of actual events
+                   ungroup() 
+
+yx_all_timeuntil <- y_all_timeuntil %>% left_join(x_all_timesince) %>%
+                    mutate(crisis_block = floor(crisno / 100) )
+
+yx_all_timeuntil %>% count(crisis_block)
+
+# Load the LightGBM and SHAP libraries
+library(lightgbm)
+
+# Assuming 'data' is your dataset and 'target' is the binary target variable
+yx_all_timeuntil$Y <- as.numeric(yx_all_timeuntil$Y)  # Ensure the target is a numeric for regression
+table(yx_all_timeuntil$Y)
+
+# Split the data into training, validation, and test sets
+set.seed(123)  # for reproducibility
+#train_idx <- id_crisis %>% sample(size = 0.8 * length(id_crisis))
+
+id_crisis <- yx_all_timeuntil %>% pull(crisno) %>% unique()
+folds <- createFolds(yx_all_timeuntil$crisno %>% unique(), k = 10) #doing 10 fold
+shap_values_list <- list()
+predictions_list <- list()
+for(i in 1:length(folds)){
+  print(i)
+
+  test_idx <- folds[[i]]
+  valid_idx <- id_crisis %>% setdiff(test_idx) %>% sample(size = 0.05 * length(id_crisis)) #sample 5 percent of the remaining
+  train_idx <- id_crisis %>% setdiff( c(test_idx, valid_idx)) #training is what's left
+
+  train_data <- yx_all_timeuntil %>% filter(crisno %in% train_idx)
+  valid_data <- yx_all_timeuntil %>% filter(crisno %in% valid_idx) 
+  test_data  <- yx_all_timeuntil %>% filter(crisno %in% test_idx)
+  
+  dim(train_data)
+  dim(valid_data)
+  dim(test_data)
+  
+  table(train_data$Y)
+  table(valid_data$Y)
+  
+  # Prepare the datasets for LightGBM
+  dtrain <- lgb.Dataset(data = train_data %>% dplyr::select(starts_with('variable'),crisis_block) %>% data.matrix( ) , label = as.integer(train_data$Y) ) #
+  dvalid <- lgb.Dataset(data = valid_data %>% dplyr::select(starts_with('variable'),crisis_block) %>% data.matrix( ) , label = as.integer(valid_data$Y) ) #
+  
+  # Define parameters
+  params <- list(
+    #objective = "regression",
+    #objective = "poisson",
+    objective = "regression_l1",  #"regression_l1", #"gamma",    
+    metric = "mae", #"mean_squared_error" ,  # Area under the precision-recall curve
+    learning_rate = 0.01 , #0.1 seems to be the sweet spot right now
+    num_leaves = 31, #31#,
+    feature_fraction = 0.6, #0.6,
+    bagging_fraction = 0.6, #0.6 ,
+    bagging_freq = 1 #,
+    #lambda_l1=0.2
+  )
+  
+  # Train the model with early stopping
+  model <- lgb.train(
+    params = params,
+    data = dtrain,
+    valids = list(valid = dvalid),
+    nrounds = 5000,
+    early_stopping_rounds = 10,
+    verbose = 1
+  )
+  # Extract SHAP values
+  shap_values <- NULL
+  shap_values <- predict(model,  test_data %>% dplyr::select(starts_with('variable'),crisis_block) %>% data.matrix( ) , predcontrib = TRUE)
+  predictions_df <- test_data
+  predictions_df$Y_hat <- predict(model,  test_data %>% dplyr::select(starts_with('variable'),crisis_block) %>% data.matrix( ) , predcontrib = F)
+  predictions_list[[i]] <- predictions_df
+  shap_values_df <- shap_values %>% 
+                    as.data.frame() %>% setNames(c(test_data %>% dplyr::select(starts_with('variable'),crisis_block) %>% colnames(), 'intercept')) %>%
+                    cbind(test_data %>% dplyr::select(crisno, sentence_number, Y))
+  shap_values_list[[i]] <- shap_values_df
+
+}
+
+predictions_oos <- predictions_list %>% bind_rows()
+
+temp <- predictions_oos %>% dplyr::select(crisno, sentence_number,     Y, Y_hat)
+
+temp %>% ggplot(aes(x=Y, y=Y_hat)) + geom_point() + geom_smooth()
+
+mean(sqrt((temp$Y_hat - temp$Y)^2))  #5.324894 #5.371377 #5.375813 #5.496948 #5.5 #5.57 #5.63 #5.76 #5.78 #5.8 with poisson #Rmse of 5.96 with bagging. 6 events. 0.01 learning rate faster and same. Higher still faster and same.
+
+#Log was worse
+#mean(sqrt((exp(temp$Y_hat) - exp(temp$Y) )^2)) #6.723754 #5.496948 #5.5 #5.57 #5.63 #5.76 #5.78 #5.8 with poisson #Rmse of 5.96 with bagging. 6 events. 0.01 learning rate faster and same. Higher still faster and same.
+
+```
+
+```{r, eval=T, fig.width=12, fig.height=14, output=F, cache=F}
+
+dim(shap_values) #7126  141
+#shap_values_df <- shap_values %>% 
+#                  as.data.frame() %>% setNames(c(yx_all_timeuntil %>% dplyr::select(starts_with('variable')) %>% colnames(), 'intercept')) %>%
+#                  cbind(yx_all_timeuntil %>% dplyr::select(crisno, sentence_number, Y))
+shap_values_df_long <- shap_values_list %>% bind_rows() %>%
+                        pivot_longer(
+                          cols = !c(crisno, sentence_number, Y), # Specify all columns except crisno and sentence_number
+                          names_to = "feature", # Name of the new column for variable names
+                          values_to = "shap"    # Name of the new column for values
+                        ) %>%
+                      left_join(
+                          x_all_timesince %>%
+                            pivot_longer(
+                              cols = !c(crisno, sentence_number), # Specify all columns except crisno and sentence_number
+                              names_to = "feature", # Name of the new column for variable names
+                              values_to = "value"    # Name of the new column for values
+                            ) )
+
+#Total contribution
+feature_shap_abs_total <- shap_values_df_long %>% group_by(feature) %>% summarise(shap_abs_total = shap %>% abs() %>% sum()) %>% arrange(shap_abs_total)
+
+#Contribution by feature
+temp <- shap_values_df_long %>% filter(!is.na(value) & value!=100)
+
+
+```
+
+```{r, eval=T, fig.width=12, fig.height=14, output=F}
+
+temp1 <- shap_values_df_long %>% filter(!is.na(value) & value!=100) %>% 
+          #filter(y_variable=="variable_value_thought_leaf__end of crisis") %>%  #doesn't apply on this outcome
+          dplyr::select(feature,shap, value) %>% group_by(feature, value) %>% summarise(shap=shap %>% mean()) %>%
+          filter(value<=20) %>% #really only loses start of crisis examples
+          group_by(feature) %>%
+            mutate(shap_total= ((shap/( (value+1)^2) ) %>% abs()) %>% sum()) %>% #filter near 0 values #we discount the further back you go
+          ungroup() %>%
+          #filter(shap_total>0.05) %>%
+          filter(shap_total>0.005) %>%
+  
+          mutate(color_category = case_when(
+            #grepl("action", feature) ~ "black",
+            grepl("speech", feature) ~ "blue",
+            grepl("thought", feature) ~ "darkorange",
+            grepl("fatalities|forces_|domains_|territory_|units_", feature) ~ "purple",
+            TRUE ~ "black"  # Default color
+          )) %>%
+          mutate(feature = feature %>% str_replace_all("feature_value_","")) %>%
+          mutate(feature = feature %>% str_replace_all("leaf__","")) %>%
+          mutate(feature = feature %>% str_replace_all("interact_","")) %>%
+          mutate(feature =  feature %>% as.factor()) %>% 
+          group_by(feature) %>%
+            mutate(test=shap %>% sum()) %>%
+          ungroup() %>%
+          #filter(value<30) %>% #really only loses start of crisis examples
+          mutate(feature = feature %>% str_replace_all("^feature","")) %>%
+          mutate(feature = feature %>% str_replace_all("variable_value_","")) %>%
+          mutate(feature = feature %>% str_replace_all("leaf__","")) %>%
+          mutate(feature = feature %>% str_replace_all("interact_","")) %>%
+          mutate(feature = feature %>% str_replace_all("do_","")) %>%
+          mutate(feature = feature %>% str_replace_all("thought_","")) %>%
+          mutate(feature = feature %>% str_replace_all("speech_","")) %>%
+          mutate(feature = feature %>% str_replace_all("domains__|units__|territory__","")) %>%
+          mutate(feature = feature %>% str_replace_all("forces__","(forces) ")) %>%
+          mutate(feature = feature %>% str_replace_all("fatalities__","(fatalities) ")) %>%
+          mutate(aggression_change = case_when(
+            feature %in% c('annex', 'assassination', 'assert autonomy against', 'assert political control over', 
+                            'attack', 'battle/clash', 'blockade', 'bombard', 'border violation', 'break off negotiations', 
+                            'continuation of previous fighting', 'coup', 'declaration of war', 'deployment to area', 
+                            'end access', 'expel', 'fortify', 'human rights violation', 'imprison', 'invasion/occupation', 
+                            'join ongoing war', 'join war on behalf',  'mass killing', 'mobilization', 
+                            'no fly zone', 'propaganda', 'raise in alert', 'restrict rights', 'riot', 'show of force', 
+                            'strike',  'terrorism', 'violate terms of treaty', 'weapons test', "protest",'withdraw diplomats','end unspecified aid','inspections', 'end unspecified cooperation',
+                            'end economic aid', 'exercise', 'end economic cooperation', 
+                            'end humanitarian aid', 'terminate treaty') ~ 'increase',
+            feature %in% c('cease fire', 'cede territory', 'de-mobilization', 'declaration of peace', 'decolonize', 
+                            'discussion', 'economic cooperation', 
+                            'end exercise',  'end military cooperation', 'end riot',  
+                             'end weapons test',  'formal military alliance', 
+                            'general political support', 'humanitarian aid', 'institutions change', 
+                            'intelligence cooperation', 'leadership change', 'leave alliance', 'mediation', 'meeting', 
+                            'military aid', 'military cooperation', 'mutual defense pact', 'natural conclusion of diplomacy', 
+                            'political succession', 'provide rights', 'reduce control over', 'reduce human rights violation', 
+                            'reduce terrorism', 'remove fortify', 'retreat', 'settle dispute', 'sign formal agreement',   'withdraw from area', 
+                            'withdraw from war',"end blockade","unspecified cooperation",'lower alert','withdraw behind border','ally','surrender') ~ 'decrease',
+            TRUE ~ 'neutral'
+          )) %>%
+          mutate(color_category = ifelse(aggression_change %in% "increase","red",color_category)) %>%
+          mutate(color_category = ifelse(aggression_change %in% "decrease","forestgreen",color_category)) %>%
+          mutate(feature =  forcats::fct_reorder(.f=feature, .x=test) ) 
+
+temp2 <- temp1  %>% arrange(test) %>% dplyr::select(feature , color_category) %>% distinct()
+
+p_Figure2 <- temp1 %>%
+  ggplot( aes(x = factor(value), y = feature, fill = shap)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(min(temp1$shap), max(temp1$shap))) +
+  theme_minimal() +
+  labs(x = "Value", 
+       y = "Behavior\nShorter Time to Crisis End                          <------------------------------------------------------->                          Longer Time to Crisis End", 
+       fill = "Change in Predicted\nSteps Remaining") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x="Observed Recently <---------------------------------------------------------------------------------------> Observed Earlier\nNumber of Time Steps Since Behavior Observed",
+       title="Predicted Change in Time Until End of Crisis",
+       subtitle="Subset to behaviors with total time discounted contribution > 0.05\nBehaviors: Thoughts (orange); Speech (blue); Escalatory Actions (red); De-escalatory Actions (green); Action Details (Purple)")+ 
+  theme(axis.text.y = element_text( colour = temp2$color_category) )
+
+ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure2_LightGBM_Results.pdf", plot = p_Figure2, width = 10, height = 14)
+
+    
+```
+
+
+```{r Cuban Missiles, eval=T,output=F}
+
+temp1 <- shap_values_df_long %>% filter(crisno==196) %>% filter(shap!=0) %>% filter(!feature %in% c('intercept','crisis_block'))  %>% 
+  mutate(t=sentence_number %>% as.factor() %>% as.integer()) %>% 
+  mutate(feature_clean = feature %>% str_replace(".*__","")) %>%
+  filter(value %in% 0) %>% arrange(t, desc(abs(shap))) %>%
+  group_by(t) %>%
+  filter(row_number()==1)
+
+temp2 <- predictions_oos %>% filter(crisno==196) %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>%
+  mutate(t=row_number()) 
+
+temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))
+
+p1 <- temp3 %>% 
+  ggplot() + 
+  geom_point(aes(x=t, y=Y_hat)) + 
+  geom_line(aes(x=t, y=Y_hat)) + 
+  geom_text(aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
+  ylim(3,13) +
+  scale_color_gradient2("Change in Predicted\nEvents Remaining",low = "darkblue", high = "red", mid = "grey", 
+                       midpoint = 0, limit = c(min(temp3$shap), max(temp3$shap) )) + #max(temp3$shap)
+  theme_bw() +
+  labs(title="Cuban Missile Crisis (1962)") +
+  ylab("Predicted Events Remaining") +
+  xlab("Events so Far (t)")
+
+
+```
+
+```{r Crimea, eval=T,output=F}
+
+temp1 <- shap_values_df_long %>% filter(crisno==471) %>% filter(shap!=0) %>% filter(!feature %in% c('intercept','crisis_block')) %>% 
+  mutate(t=sentence_number %>% as.factor() %>% as.integer()) %>% 
+  mutate(feature_clean = feature %>% str_replace(".*__","")) %>%
+  filter(value %in% 0) %>% arrange(t, desc(abs(shap))) %>%
+  group_by(t) %>%
+  filter(row_number()==1)
+
+temp2 <- predictions_oos %>% filter(crisno==471) %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>%
+  mutate(t=row_number()) 
+
+temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))
+
+p2 <- temp3 %>% 
+  ggplot(aes(x=t, y=Y_hat)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_text(data=temp3, aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
+  ylim(7,17) +
+  scale_color_gradient2("Change in Predicted\nEvents Remaining",low = "blue", high = "red", mid = "grey", 
+                       midpoint = 0, limit = c(min(temp3$shap), max(temp3$shap))) +
+  theme_bw() +
+  labs(title="Crimea-Donbas (2014)") +
+  ylab("Predicted Events Remaining") +
+  xlab("Events so Far (t)")
+
+```
+
+```{r Gulf War, eval=T,output=F}
+
+temp1 <- shap_values_df_long %>% filter(crisno==393) %>% filter(shap!=0)  %>% filter(!feature %in% c('intercept','crisis_block'))  %>% 
+  mutate(t=sentence_number %>% as.factor() %>% as.integer()) %>% 
+  mutate(feature_clean = feature %>% str_replace(".*__","")) %>%
+  filter(value %in% 0) %>% arrange(t, desc(abs(shap))) %>%
+  group_by(t) %>%
+  filter(row_number()==1)
+
+temp2 <- predictions_oos %>% filter(crisno==393) %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>%
+  mutate(t=row_number()) 
+
+temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))
+
+p3 <- temp3 %>% 
+  ggplot(aes(x=t, y=Y_hat)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_text(data=temp3, aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
+  ylim(4,14) +
+  scale_color_gradient2("Change in Predicted\nEvents Remaining",low = "blue", high = "red", mid = "grey", 
+                       midpoint = 0, limit = c(min(temp3$shap), max(temp3$shap))) +
+  theme_bw() +
+  labs(title="GULF WAR (1990)") +
+  ylab("Predicted Events Remaining") +
+  xlab("Events so Far (t)")
+
+
+```
+
+```{r, eval=T, fig.width=14, fig.height=12, output=F}
+# Load the necessary library
+
+library(cowplot)
+
+# Assuming you have three ggplot objects named plot1, plot2, plot3
+p_Figure3 <- plot_grid(p1, p3, p2,
+                           align = 'v', # Aligns vertically
+                           nrow = 3,    # Number of rows
+                           rel_heights = c(1, 1, 1)) # Relative heights of each row
+
+# To display the combined plot
+# If you want to save the combined plot to a file
+#ggsave("combined_plot.png", combined_plot, width = 10, height = 30, dpi = 300)
+
+ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure3_TimeSeries.pdf", plot = p_Figure3, width = 14, height = 12)
+
+
+```
+
+
+
+```{r, eval=T, fig.width=7, fig.height=6, output=F}
+
+temp1 <- predictions_oos %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>% group_by(crisno) %>% mutate(t=row_number()) %>% ungroup()
+
+temp1_wide <- temp1 %>% dplyr::select(crisno, t, Y_hat) %>%pivot_wider( 
+                       names_from = t, 
+                       values_from = Y_hat,
+                       names_prefix = "t")
+
+df_without_crisno <- temp1_wide[, -1]
+
+na_euclidean <- function(x, y) {
+  valid <- !is.na(x) & !is.na(y)
+  sqrt(sum((x[valid] - y[valid])^2))
+}
+n <- nrow(df_without_crisno)
+
+# Initialize a matrix to store distances
+distance_matrix <- matrix(NA, n, n)
+
+if(FALSE){
+  for (i in 1:(n-1)) {
+    print(i)
+    for (j in (i+1):n) {
+      distance_matrix[i, j] <- na_euclidean(df_without_crisno[i, ], df_without_crisno[j, ])
+      distance_matrix[j, i] <- distance_matrix[i, j]  # The matrix is symmetric
+    }
+  }
+  
+  distance_matrix %>% saveRDS("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/data_out/distance_matrix.Rds")
+}
+
+distance_matrix <- readRDS("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/data_out/distance_matrix.Rds")
+
+# View the distance matrix
+distance_matrix_clean <- distance_matrix
+distance_matrix_clean[is.na(distance_matrix_clean)] <- 0
+d_distance_matrix_clean <- dist(distance_matrix_clean)
+
+hc <- hclust(d_distance_matrix_clean, method="ward.D2")
+plot(hc)
+colors_df <- temp1_wide[, 1]
+colors_df$cluster <- cutree(hc,k=6) %>% as.factor()
+
+p4 <- temp1 %>% left_join(colors_df) %>%
+      ggplot(aes(x=t, y=Y_hat, group=crisno, color=cluster, linetype=cluster)) + 
+      #geom_point() + 
+      geom_line(alpha=0.1) + 
+      geom_smooth(aes(x=t, y=Y_hat, group=cluster, color=cluster), se=F, span=0.01) +
+      #geom_text(data=temp3, aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
+      #ylim(5,17) +
+      #scale_color_gradient2("Change in Predicted\nEvents Remaining",low = "blue", high = "red", mid = "grey", 
+      #                     midpoint = 0, limit = c(min(temp3$shap), max(temp3$shap))) +
+      theme_bw() +
+      labs(title="Distribution of Predicted Crisis Paths") +
+      ylab("Predicted Events Remaining") +
+      xlab("Events so Far (t)")
+p4
+
+library(dendextend)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(ggdendro)
+dend <- as.dendrogram(hc)
+
+# Color the branches by the clusters
+dend <- color_branches(dend, k = 6) #, col = colors_df$cluster
+ggd1 <- as.ggdend(dend)
+library(ggplot2)
+# the nodes are not implemented yet.
+pd <- ggplot(ggd1) 
+
+p_Figure4 <- cowplot::ggdraw() +
+  cowplot::draw_plot(p4) +
+  cowplot::draw_plot(pd, x = 0.6, y = 0.6, width = 0.3, height = 0.3)
+
+ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.pdf", plot = p_Figure4, width = 10, height = 6)
+
+# Draw the combined plot
+#plot(overlay_plot)
+
+
+```
+
+# Introduction
+
+What does it mean that an international crisis is escalating, and what actions within a crisis are escalatory? This question haunts recent and ongoing crises such as missile tests on the Korean Peninsula, Russian incursions in Ukraine, partial state death in Syria, and Chinese claims of sovereignty in the South and East China Seas. In these situations, leaders face a shared fundamental question about how to navigate a dangerous situation without accidentally sliding over the line into a larger-than-desired conflict (Snyder and Diesing 1977; Slantchev 2005). Often leaders must make decisions with limited time and inadequate information (Jervis 1976, p. 95). What guidance can we offer to help maintain peace and stability? Can we predict how states will react to specific events during crises? Can we recommend policies or actions that are most likely to lead to success without being destabilizing? In short, what empirical evidence can we bring to bear on the practical questions of crisis management?^[Consistent findings in the context of cross-domain deterrence and escalation using the ICBe data are described in Gannon (2022).]
 
 The international relations field offers two foundational perspectives on crisis dynamics, classically described by Robert Jervis (1976) as the deterrence model and the spiral model. The former blames escalation on the failure to credibly communicate threats (Rovner 2020) or misperceptions about capability or resolve (Morrow 2019). The latter views escalation as a retaliation to provocation where a tit-for-tat response fails to end the crisis (O’Neill 1991). These models offer contradictory policy prescriptions: on one hand, policymakers should use bold words and actions to discourage aggression; on the other, they should mitigate security dilemmas through compromise and accommodation. Historical studies typically provide more nuance, but the additional context needed to make sense of specific crises just highlights the fact that both models are underspecified. Neither model, moreover, is well integrated with more recent thinking about the underlying bargaining dynamics of military contests (Fearon 1995). Previous empirical research designed to validate or reject competing theoretical explanations for escalation has faced daunting challenges given that the basis for comparison and/or the logical discrepancies between alternative theories have not been resolved (Glaser 1992; Kydd 1997; Zagare and Kilgour 1998) and the ability to empirically assess such efforts is complicated by the structural indeterminacy of uncertainty (Gartzke 1999; Chen, et al. 2022). These efforts have yet to establish a consensus pecking order between canonical alternatives (c.f., Wright 1965; Carlson 1995; Kinsella and Russett 2002).
 
@@ -56,17 +1065,17 @@ Recognizing the enormous efforts of previous theoretical and empirical scholarsh
 
 This analysis is organized as follows. We first briefly review the most relevant examples of research on deterrence and the spiral model, both theory and evidence. We then discuss the problem of inference about processes utilizing non-process datasets (the only data that has been available to researchers up until this point in studying international conflict). The bulk of the chapter focuses on our abductive empirical “deep dive” (Tavory and Timmermans 2014; Heckman and Singer 2017) presenting details of the novel ICBeLLM dataset (Douglass, et al. 2023), identifying variables associated with escalation and de-escalation, and estimating our crisis duration model, based on these variables. We conclude with some insights of the project and suggestions for future research.
 
-# 2.0 Crises, Escalation, and the State of the Art
+# Crises, Escalation, and the State of the Art
 
-The scientific state of the art on crisis escalation is too large and amorphous of a topic to fully summarize here, and so we draw attention to the minimal necessary machinery for understanding the empirical argument made here. Those components are the domain of the activity in question, the definition of the outcome we seek to explain, theoretical priors about the connection between different possible actions and that outcome, and empirical attempts to measure the above.
+The scientific state of the art on crisis escalation is too large and amorphous of a topic to fully summarize, and so we draw attention to the minimal necessary machinery for understanding the empirical argument made here. Those components are the domain of the activity in question, the definition of the outcome we seek to explain, theoretical priors about the connection between different possible actions and that outcome, and empirical attempts to measure the above.
 
-## 2.1 Crisis and Stability
+## Crisis and Stability
 
-The status quo in international relations is almost always one of stability, slow-changing bargains, and relative cooperation. War and conflict are the exceptions (Vasquez and Valeriano 2010). Formally, consider a set of autonomous political actors or players, $p\in P$, consisting of states, international organizations, and subnational organizations. At each moment in time, $t$, they engage in behaviors, $b\in B$, individually and towards each other which they each then hold preferences over. Any player can transition to a period of crisis when those behaviors swing toward “disruptive interaction with a heightened probability of military hostilities that destabilizes states’ relationships or challenges the structure of the international system” (Brecher and Wilkenfeld 1982). The International Crisis Behavior project has documented 496 such periods since 1918 (Brecher and Wilkenfeld 1997). Formally, we can think of this as a simple Markov model with two discrete latent states, stability $S$ and crisis $C$, $\Theta_{p,t}\in[S,C]$. This latent state is in turn partially observed in the current and historical behavior of the players.
+The status quo in international relations is almost always one of stability, slow-changing bargains, and relative cooperation. War and conflict are the exceptions (Vasquez and Valeriano 2010). Formally, consider a set of autonomous political actors or players, $p\in P$, consisting of states, international organizations, and subnational organizations. At each moment in time, $t$, they engage in behaviors, $b\in B$, individually and towards each other which they each then hold preferences over. Any player can transition to a period of crisis when those behaviors swing toward "disruptive interaction with a heightened probability of military hostilities that destabilizes states’ relationships or challenges the structure of the international system" (Brecher and Wilkenfeld 1982). The International Crisis Behavior project has documented 496 such periods since 1918 (Brecher and Wilkenfeld 1997). Formally, we can think of this as a simple Markov model with two discrete latent states, stability $S$ and crisis $C$, $\Theta_{p,t}\in[S,C]$. This latent state is in turn partially observed in the current and historical behavior of the players.
 
-The measurement strategy for the unobserved latent state is to use observables like behaviors as proxies, $b_{p^-1,t}=F(\Theta_{p,t})$. When other players are behaving badly, we think a player is strictly more likely to be in a state of crisis. However, the policy-relevant question we want to answer concerns the causal impact of a behavior on the continuation or resolution of a crisis, $\Omega_{p,t}=F(b_{p^-1,t-1},b_{p,t-1})$. This reveals an immediate conceptual difficulty- we are using measurements of behaviors observed in time t to predict a phenomenon in $t−1$. The definition of and measurement of a discrete-time step within a crisis is doing the majority of our conceptual work. This fact has created unending confusion between measurement, explanation, prediction, and prescription in the study of crises, and we tackle it directly below.
+The measurement strategy for the unobserved latent state is to use observables like behaviors as proxies, $b_{p^-1,t}=F(\Theta_{p,t})$. When other players are behaving badly, we think a player is strictly more likely to be in a state of crisis. However, the policy-relevant question we want to answer concerns the causal impact of a behavior on the continuation or resolution of a crisis, $\Omega_{p,t}=F(b_{p^-1,t-1},b_{p,t-1})$. This reveals an immediate conceptual difficulty. Behaviors appear on both sides of the regression equation, first on the left hand side as a proxy measurement for the dependent variable of state of crisis in time $t$ and then individually on the right hand side as potential causes of crisis if observed in time $t-1$. This means the definition and measurement of a discrete-time step within a crisis is doing the majority of our conceptual work. This fact has created unending confusion between measurement, explanation, prediction, and prescription in the study of crises, and we tackle it directly below.
 
-## 2.2 Defining Crisis
+## Defining Crisis
 
 For now, imagine a stylized crisis with two discrete and clearly distinguishable time steps, $t$ and $t-1$. In $t$, we want to know whether a player is in a state of stability or crisis. We observe the behaviors of other actors in time $t$, $b_{p^-1,t}$. International relations theory holds strong beliefs about which behaviors are more crisis-like. For each behavior, $b$, assign a weight $w=[w_1,w_2,...,w_n]$, representing the strength of the signal it provides that a player is currently in a crisis state and the discrete state is some function of the sum of each of these weighted observed behaviors $\Theta_{p,t}=F(\sum^n_{i=1}w_i*b_i)$.
 
@@ -181,31 +1190,68 @@ Allow access"  %>% str_split("\n") %>% unlist()
 )
 
 dfs <- list(df1,df2,df3,df4)
-lapply(dfs, nrow)
+#lapply(dfs, nrow)
 
 ```
 
-```{r, eval=T, output=T}
+```{r, eval=F, output=T}
 
 # AG NOTE FOR Rex: CONVERT TO GRAYSCALE AND ADD CAPTION WITH TABLE NUMBER
 
 library(reactable) #install.packages('reactable')
+library(reactablefmtr) #install.packages("reactablefmtr")
 bind_cols(df1,df2,df3,df4) %>% 
   reactable(bordered = TRUE, striped = TRUE, highlight = TRUE, defaultPageSize = 100,
-            columns = list( Armed.Escalatory = colDef(name = "Armed Escalatory",style = list(fontSize = '12px')) ,
-                            Unarmed.Uncooperative = colDef(name = "Unarmed Uncooperative",style = list(fontSize = '12px')) ,
-                            Armed.De.escalatory = colDef(name = "Armed De-escalatory",style = list(fontSize = '12px')) ,
-                            Unarmed.Cooperative = colDef(name = "Unarmed Cooperative",style = list(fontSize = '12px'))  ) )
+            columns = list( Armed.Escalatory = colDef(name = "Armed Escalatory",style = list(fontSize = '10px')) ,
+                            Unarmed.Uncooperative = colDef(name = "Unarmed Uncooperative",style = list(fontSize = '10px')) ,
+                            Armed.De.escalatory = colDef(name = "Armed De-escalatory",style = list(fontSize = '10px')) ,
+                            Unarmed.Cooperative = colDef(name = "Unarmed Cooperative",style = list(fontSize = '10px'))  ) ) %>%
+  add_title("Table 1: ICBe Ontology Categorization of Behaviors into Escalatory/Uncooperative vs De-escalatory/Cooperative") 
+
 
 ```
 
-## 2.3 Defining Escalation/De-escalation
+```{r, eval=T, output=T}
+library(flextable)
+library(dplyr)
+
+# Assuming df1, df2, df3, and df4 are your data frames
+data <- bind_cols(df1, df2, df3, df4)
+
+# Create a flextable
+ft <- flextable(data)
+
+# Customize the flextable
+ft <- set_header_labels(ft, 
+                        `Armed.Escalatory` = "Armed Escalatory",
+                        `Unarmed.Uncooperative` = "Unarmed Uncooperative",
+                        `Armed.De.escalatory` = "Armed De-escalatory",
+                        `Unarmed.Cooperative` = "Unarmed Cooperative"
+                       )
+
+ft <- fontsize(ft, size = 10, part = "header")
+ft <- fontsize(ft, size = 9, part = "body")
+#ft <- set_table_properties(ft, layout = "autofit")
+
+# Optionally, you can add a caption (similar to a title)
+ft <- add_footer_lines(ft, "Table 1: ICBe Ontology Categorization of Behaviors into Escalatory/Uncooperative vs De-escalatory/Cooperative")
+
+ft <- width(ft, j = 1, width = 1.75)  # Adjust the width as needed for each column
+ft <- width(ft, j = 2, width = 1.75)
+ft <- width(ft, j = 3, width = 1.75)
+ft <- width(ft, j = 4, width = 1.75)
+
+# Display the table
+ft
+```
+
+## Defining Escalation/De-escalation
 
 We take exactly one time step back in our stylized crisis to $t−1$ and define the relationship between a given behavior and crisis stability. For simplicity, we assume the player is already in a state of crisis at $t−1$, and so the only transition probabilities we are interested in are from crisis to crisis, $P(C\rightarrow C)$, and from crisis to stability $P(C\rightarrow S)$. Because the two outcomes are mutually exclusive, we can further consider just a single transition, and so we choose $P(C\rightarrow C)$, the probability of crisis being followed by more crisis. As before, we can think of all of the same behaviors, $b_{p^-1,t}$, simply observed one time step earlier, and we can assign another weight vector $\beta=1,2,..,n$, and specify some function that maps the last period’s behaviors to the next period’s probability of being in a state of crisis $\Theta_{p,t} = F(\sum^n_{i=1}\beta_i * b_{t-1,i})$.
 
 Unlike before, the theoretical literature on crisis stability is far more divided on what those weights should be (Brams and Kilgour 1987; Powell 1989). As a gross simplification, one major vein of literature views the weights of escalation to be highly correlated with the weights indicating a crisis (Colaresi and Thompson 2002), while another views at least some of the weights as flipped (Spaniel and Idrisoğlu 2023).
 
-## 2.4 Perspectives on Escalation
+## Perspectives on Escalation
 
 One might assume that doing more aggressive and destructive things would be followed by even more aggression and destruction. Yet those same aggressive actions might intimidate others into backing down. In one case, aggression begets aggression, and in the other, aggression encourages submission. Security dilemma models following from pessimistic assumptions tend to focus on the first case, and relatively more optimistic deterrence models on the second. Scholars have explored subtle situations in which even two well-meaning players might find themselves caught in a conflict that neither of them intended. The so-called spiral model considers tough talk and a forward military posture to be inflammatory, exacerbating security dilemmas and heightening the risk of war (Herz 1950; Smoke 1977; Jervis 1978; Glaser 1997). Threats alert an adversary, weakening defense and triggering anticipatory reactions. A nation targeted by an adversary with threats of retaliation should be less likely to back down if there are reputational costs (domestic, international) or psychological burdens for failing to fight (Jervis, Lebow, and Stein 1989; Lebow and Stein 1989). Indeed, such threats may trigger action where none exists. In the model above, the weights of escalation and crisis indicators are highly correlated.
 
@@ -217,7 +1263,7 @@ Both the classical spiral and deterrence frameworks are rooted in earlier intuit
 
 Process matters, as historians have long understood, but the spiral and deterrence models do not explicitly incorporate contingency. Process seems to be more relevant in the spiral model, which implies a long history of tit-for-tat interactions building up to an explosive crisis, yet even here, each event is assumed to be positively correlated with a greater likelihood of war in the future, so the temporal sequence is less relevant than it first appears. The deterrence model, likewise, cannot explain why the same type of move, say the mobilization of troops on a border or deployment of warships to a coast, is followed by stability in one crisis yet instability in subsequent crises. The string of crises leading up to World War I is only the most obvious example. To use the terms of the illustrative model above, there is some other vector of $X$ contextual conditions that determines whether escalatory weights are correlated one way or the other. Classical theories are underdetermined because they’ve just taken a coarse average over all of those conditions.
 
-## 2.5 The Measurement Problem in Escalation Research
+## The Measurement Problem in Escalation Research
 
 At least part of the difficulty with making sense of escalation empirically lies in the limitations imposed by existing data. Conventional datasets in international security either code outcomes or events, which means that the conflict processes modeled above are aggregated into discrete data points. However, escalation is a process, a series of relationships that both tie events together across time and that are sequentially meaningful or significant. Immediate deterrence implies a general deterrence failure (perhaps). A spiral requires triggers and effects, each related to the other. If researchers lack information about what might be called the “begats” of international relations—what factors preceded and precipitated outcomes of interest—then it will be difficult to decide whether deterrence or a spiral even occurred, let alone how they work and why.
 
@@ -227,49 +1273,58 @@ A second, less common though important, and innovative form of conflict data col
 
 As it turns out, there may not be a direct connection between the amount of information (number of events) collected and the ability to capture the “begats” that are intrinsic to making sense of processes. We just do not know in a large corpus of conflict events what prior events do to make subsequent events more or less likely. Lacking clear theory or correlates, the tendency has been to “bin” events, creating counts by type or intensity by time period that begin to look much more like conflict data than was originally the intent of events researchers. We propose a different, hybrid approach seeking to sort out cause and effect in studying escalation, at least as an interim measure.
 
-# 3.0 Data and Measurement Strategy
+# Data and Measurement Strategy
 
-We employ narratives of 475 crises recorded by the ICB project version 12. To measure the actions that take place within those crises we employ the International Crisis Behavior Events dataset (ICBe) (Douglass et al. 2022). Human codings are provided by ICBe v1.1, which we subset to just expert-trained coders (discarding additional novice student coders). Machine codings are provided by ICBeLLM (Douglass et al. 2023), which uses a large language model with engineered prompts to approximate the human application of the ICBe ontology to crisis texts. To maximize precision, we keep only details that were reported by at least two experts or by one expert and the LLM. The raw unit of analysis is the crisis-sentence-actor set (n=17,289). An actor-set is a unique combination of values for {think_actor_a, say_actor_a, say_actor_b, do_actor_a, do_actor_b}. Each sentence can then be mapped to multiple events as long as those events involve the same actors (e.g. an action by actor A against actor B can be coded alongside a different action by actor B against actor A, and a speech act can be coded in addition to a separate action, etc.). The inclusion of ICBeLLM increases the number of observations from 11,374 expert human coder-only events to 17,289 events total, a 52% increase in the sample size without compromising quality and without hiring and training additional human coders.
+We employ narratives of 475 crises recorded by the ICB project version 12. To measure the actions that take place within those crises we employ the International Crisis Behavior Events dataset (ICBe) (Douglass et al. 2022). Human codings are provided by ICBe v1.1, which we subset to just expert-trained coders (discarding additional novice student coders). Machine codings are provided by ICBeLLM (Douglass et al. 2023), which uses a large language model with engineered prompts to approximate the human application of the ICBe ontology to crisis texts. To maximize precision, we keep only details that were reported by at least two experts or by one expert and the LLM. The raw unit of analysis is the crisis-sentence-actor set (n=15,487). An actor-set is a unique combination of values for {think_actor_a, say_actor_a, say_actor_b, do_actor_a, do_actor_b}. Each sentence can then be mapped to multiple events as long as those events involve the same actors (e.g. an action by actor A against actor B can be coded alongside a different action by actor B against actor A, and a speech act can be coded in addition to a separate action, etc.). The inclusion of ICBeLLM increases the number of observations from 9,358 expert human coder-only events to 15,487 events total, a 65% increase in the sample size without compromising quality and without hiring and training additional human coders.
 
-## 3.1 Unit of Analysis
+## Unit of Analysis
 
-Our unit of analysis is the crisis-time step. We have 475 crises. Our stylized example crisis had only two time steps, whereas we estimate between 2 and 68 time-steps (median 13) for our corpus of narratives. A time-step is defined as a sentence in a narrative that generated any ICBe/ICBeLLM events. We aggregate all behaviors observed across events within that time-step, e.g. a sentence describing a threat by one actor and an attack by another are all assigned to that single time step.
+Our unit of analysis is the crisis-time step. We have 475 crises. Our stylized example crisis had only two time steps, whereas we estimate between 2 and 68 time-steps (median 13) for our corpus of narratives. There are 7,126 crisis-time steps in total. A time-step is defined as a sentence in a narrative that generated any ICBe/ICBeLLM events. We aggregate all behaviors observed across events within that time-step, e.g. a sentence describing a threat by one actor and an attack by another are all assigned to that single time step.
 
-## 3.2 Measuring Crisis – ICB Universe of Crises
+## Measuring Crisis – ICB Universe of Crises
 
 We rely on the human judgments of the ICB project to define the start and stop of a crisis. We imagine the qualitative coding process as dragging a convolutional filter across a sequence of behaviors and then firing once the perceived departure from the norm reaches sufficient strength. When the ICB narrative stopped describing events for that crisis we consider that a transition from crisis to stability.
 
-## 3.3 Measuring Escalation/De-escalation – Time Until Crisis End
+## Measuring Escalation/De-escalation – Time Until Crisis End
 
 Our outcome of interest is the number of time steps remaining until a given crisis ends, $Y_{c,t}\in [0,...,max(t_c)]$. Our stylized example crisis consisted of only two time steps and a single transition. Our full crises consist of multiple steps, any one of which could have transitioned to stability. The number of steps remaining provides more information than a single yes/no transition, and it has a nice intuitive interpretation. ‘Time until crises end’ is a directly interpretable proxy measure of escalation/de-escalation. A behavior that greatly increases the expected length of the crisis is escalatory and one that shortens the length is de-escalatory. This definition does not rely on pre-decided judgments of behaviors, and it allows for theories that argue even more aggressive/violent behaviors might actually shorten or deter a crisis altogether.
 
-# 4.0 Modeling Strategy
+# Modeling Strategy
 
 Our ultimate goal is to be able to give policy decision-makers evidence-based recommendations about what kinds of actions they can take to de-escalate a crisis and restore a stable international environment. Unfortunately, we lack the leverage to establish the necessary counterfactuals to make such strong causal claims. However, with a large and increasingly detailed historical repository of international events, we can achieve a related goal of giving policymakers the analytical ability to see how an unfolding crisis compares with other crises, especially those that are objectively “most similar” within a given period of history. For any currently unfolding crisis, we should be able to say that given events up until a certain point in time $t$ are the most valid historical analogies with similar histories. Although history never repeats itself exactly, knowing the distribution of outcomes among an event's nearest rhymes or whether an ongoing crisis has no near historical analogs is itself useful for policymakers.
 
-## 4.1 When Behaviors Appear in Crises
+## When Behaviors Appear in Crises
 
-To illustrate the idea, we begin first with a simple descriptive exercise arranging the types of behaviors we observe empirically in crises by when (i.e. the time point) that they tend to occur within a crisis. Our unit of analysis is the crisis-sentence-behavior. We calculate each behavior’s relative position within a crisis by counting the number of behaviors occurring before it and dividing this number by the total number of events, $Y=relative position ∈[0,1]$. We estimate the relative position of each behavior in the crisis using a fractional logit model, as a function of only one hot encoding of each behavior, and with standard errors clustered by crisis. The resulting average location and 95% confidence intervals are shown in Figure 1 below.
+To illustrate the idea, we begin first with a simple descriptive exercise arranging the types of behaviors we observe empirically in crises by when (i.e. the time point) that they tend to occur within a crisis. Our unit of analysis is the crisis-sentence-behavior. We calculate each behavior’s relative position within a crisis by counting the number of behaviors occurring before it and dividing this number by the total number of events, $Y∈[0,1]$. The mean location within narratives across the entire corpus is shown in Figure 1 below.
 
-\< FIGURE 1 about here \>
+<!-- \< FIGURE 1 about here \>  -->
 
-We find that behaviors align in time in a way that largely mirrors our prior beliefs about what constitutes escalatory/non-cooperative behaviors versus de-escalatory/cooperative behaviors. The ICBe ontology explicitly binned actions into escalator/non-cooperative (red)—which we find here appear earlier in crises—and de-escalatory/cooperative (green)—which we find appear later in crises. The two groups are so strongly correlated with time within crises that they are nearly linearly inseparable. Thought behaviors were not pre-divided into types, but they similarly align over time with motivations for conflict appearing early (start of crisis, territory aims, regime change aims, preemptive aims, discovering or becoming convinced of a fact, etc.) and thoughts ending late (perceptions of defeat, perception of end of a crisis). Likewise, speech acts that appear early on in crises include accusations, demands, ultimatums, and threats, while speech acts that tend to be associated with the ending of crises include promises, offers, and acceptances. The details of actions tend to appear earlier in crises except for the consequences, while changes in territory come later.
+```{r, eval=T, fig.width=12, fig.height=16, output=T}
+p_Figure1
+```
 
-## 4.2 Predicting Time Until Crisis Resolution
+We find that behaviors align in time in a way that largely mirrors our prior beliefs about what constitutes escalatory/non-cooperative versus de-escalatory/cooperative behaviors. The ICBe ontology explicitly binned actions into escalator/non-cooperative (red)—which we find here appear earlier in crises—and de-escalatory/cooperative (green)—which we find appear later in crises. The two groups are so strongly correlated with time within crises that they are nearly linearly separable. Thought behaviors were not pre-divided into types, but they similarly align over time with motivations for conflict appearing early (start of crisis, territory aims, regime change aims, preemptive aims, discovering or becoming convinced of a fact, etc.) and thoughts ending late (perceptions of defeat, perception of end of a crisis). Likewise, speech acts that appear early on in crises include accusations, demands, ultimatums, and threats, while speech acts that tend to be associated with the ending of crises include promises, offers, and acceptances. The details of actions tend to appear earlier in crises, e.g. how many troops, while the consequences, e.g. changes in territory, tend to come toward the end.
+
+## Predicting Time Until Crisis Resolution
 
 We can now move to analyzing variation within crises. Our unit of analysis shifts to the crisis-time step, where each sentence of the crisis narrative with coded ICBe events represents a single step. This measure (number of time steps remaining until the termination of a given crisis) roughly represents our earlier discussion of crisis resolution versus extension. When a crisis begins at $t=0$, participants do not know whether it is going to last a long time or end quickly. Once we’ve seen a few behaviors, we want to update our beliefs and ask whether it is more likely that participants are getting closer to, or conversely further away from a resolution of the crisis. Importantly, we want to understand which behaviors signal the likely impending termination of a crisis.
 
-We want to predict the time it will take to resolve a crisis as a function of the history of behaviors until time $t$, $Y_c,t=F(X_t)$. We encode the history of crisis behaviors as features of the crisis in the following way. For each of the 140 possible behaviors/details, we calculate the number of time steps since it was last observed (0 in cases where it appeared in the current time step, 1 for one time step ago, etc.). For behaviors/details not observed at all, we set them at an extreme value of 100, allowing our tree-based estimator to intelligently bin events that never appeared with those that appeared a very long time ago, or alternatively to split them off entirely as a different category of behaviors altogether. We further add a single control variable of the crisis number coarsened into five blocks of \~100, to account for the ICB crisis project trending toward writing longer narratives for more recent years.
+We want to predict the time it will take to resolve a crisis as a function of the history of behaviors until time $t$, $Y_{c,t}=F(X_t)$. We encode the history of crisis behaviors as features of the crisis in the following way. For each of the 140 possible behaviors/details, we calculate the number of time steps since it was last observed (0 in cases where it appeared in the current time step, 1 for one time step ago, etc.). For behaviors/details not observed at all, we set them at an extreme value of 100, allowing our tree-based estimator to intelligently bin events that never appeared with those that appeared a very long time ago, or alternatively to split them off entirely as a different category of behaviors altogether. We further add a single control variable of the crisis number coarsened into five blocks of \~100, to account for the ICB crisis project trending toward writing longer narratives for more recent years.
 
-Our cross-validation strategy takes into account the nested-panel structure of our data. We divide the C=475 crises into 10 test folds. For each test fold (c=48), we fit a model dividing the remaining c=427 into a training set of crises c=385 and a validation data set c=42. The same crisis will therefore never appear in both training and test, or training and validation, etc. By fitting 10 models—predicting out-of-sample for each of the 10 test folds—we can evaluate the out-of-sample performance and predictions on every observation in the dataset.
+Our cross-validation strategy takes into account the nested-panel structure of our data. We divide the $C=475$ crises into 10 test folds. For each test fold ($c=48$), we fit a model dividing the remaining crises, $c=427$, into a training set of crises, $c=405$, and a validation data set, $c=23$. The same crisis will therefore never appear in both training and test, or training and validation, etc. Because we fit 10 different models predicting out-of-sample for each of the 10 test folds, we are able to present results below that cover the entire dataset and are based only on out of sample predictions.
 
-We employ a gradient-boosted trees estimator, specifically LightGBM (Ke, et al. 2017).[^2] Our estimand is the degree to which previous behaviors lengthen or shorten a crisis, the degree to which a behavior is escalatory, the weights $\beta$ introduced earlier. We approximate that estimand using the out of sample feature contributions of each behavior - time since observed. Our measure of feature contributions is SHAP values which is a local approximate decomposition of each feature’s contribution to the final prediction produced by the full black box model.
+We employ a gradient-boosted trees estimator, specifically LightGBM (Ke, et al. 2017). We choose this estimator because of its speed, flexibility, and predictive performance. It is nonparametric, allowing us to easily distinguish differential effects of a behavior happening recently from long ago, and to automatically search for interactions among behavior types. We optimize an L1 regression loss, mean absolute error, rather than mean squared error, which is less sensitive to outlier very long crisis narratives, and empirically had better out-of-sample performance. 
 
-[^2]: We choose this estimator because of its speed, flexibility, and predictive performance. It is nonparametric, allowing us to easily distinguish differential effects of a behavior happening recently from long ago, and to automatically search for interactions among behavior types. We optimize an L1 regression loss, mean absolute error, rather than mean squared error, which is less sensitive to outlier very long crisis narratives, and empirically had better out-of-sample performance.
+Our estimand is the degree to which previous behaviors lengthen or shorten a crisis, the degree to which a behavior is escalatory, the weights $\beta$ introduced earlier. We approximate that estimand using the out of sample feature contributions of each behavior - time since observed. Our measure of feature contributions is SHAP values which is a local approximate decomposition of each feature’s contribution to the final prediction produced by the full black box model. 
 
 The results are shown in Figure 2 below. The outcome is predicted time until the end of the crisis (defined as no more events coded from the narrative). Along the Y-axis each row lists the behaviors with the greatest contribution to the model’s predictions. Along the X-axis, each column lists the number of time steps in the past that behavior was last observed, with 0 being concurrently to a given time $t$. The cells are shaded with the observed SHAP value for that behavior last observed that many time steps ago, with bright red reflecting a strong increase in the expected number of steps until the end of the crisis and deep blue representing a strong expected decrease in the number of steps until the end of a crisis. Behaviors are arranged in descending order, from the largest expected increase in time until crisis end to the largest expected decrease (sum each row’s total SHAP contribution, dividing each cell’s value by the time since it was observed to place greater weight on more recent acts).
 
-\< FIGURE 2 about here \>
+<!-- \< FIGURE 2 about here \> -->
+
+```{r, eval=T, fig.width=12, fig.height=14, output=T}
+p_Figure2
+```
+
 
 We start by describing the easiest-to-understand behavior, “end of crisis,” which is something that was explicitly mentioned in each crisis narrative and coded by ICBe as a thought behavior. Once the narrative mentions that one of the actors has decided that the crisis has ended, the model expects the whole narrative to wrap up shortly and stop producing coded events. The effect also grows stronger in time; the longer in the past that an end to the crisis is mentioned, the more likely it is that the narrative really will be wrapping up soon, until at some point the sign flips and it becomes more likely that the crisis ended for only a subset of actors and the rest continued on their own path. On the opposite end of the spectrum, forming a military alliance is most indicative that the crisis is going to extend longer and as before the strength is greatest the more recent the behavior was observed.
 
@@ -285,25 +1340,38 @@ We stress that this is a purely observational research design that cannot distin
 
 From the perspective of the debate between deterrence and the spiral model, these results are much less supportive. Preparing to fight a war and actually declaring it are closely related, and so mobilizing forces, events involving tens of thousands of troops, conducting a weapons test, and other similar events that potentially transmit information about resolve (signaling) all tend to indicate that the crisis is just warming up. Likewise, intensive fighting and to a lesser degree just fighting in general tend to indicate a crisis is coming to an end. As a mental model, this corpus of crises can be thought of as long lead-ups in grievances and disputes ending either in diplomacy or exploding in the use of decisive violence. To the degree that decisive violence is self-perpetuating, it is more likely to be evidenced in the creation of new crises between the same actors over years as they regroup and find a new approach/vector to attack one another.
 
-# 5.0 Case Examples
+# Case Examples
 
 In this section, we detail three case study examples that help to illustrate how behaviors impact expectations over the course of a crisis. Additional details of each case are depicted in Figure 3. The Y-axis in Figure 3 reports the predicted number of steps estimated to remain in the crisis. The X-axis details the step T in the crisis (note that the length of each crisis differs). We annotate each point with the behavior that most strongly contributed to a given prediction (colored by the strength and direction of that particular contribution).
 
-\< FIGURE 3 about here \>
+<!-- \< FIGURE 3 about here \> -->
 
-For example, at the first time-step of the Cuban Missile Crisis, the model estimates that there are likely to be 10 more steps, which is driven primarily by the global average and partly by the only information seen so far in the behaviors of just that first step. The behavior in that first step that most contributed to the prediction was that the United States discovered a fact, leading the model to increase the expected length of the crisis. The next step contained little information keeping the number of expected steps at 10 despite advancing 1. In the third step, the model lowers its expected length because of a rejection combined with the mobilization last observed only 2 steps prior. In this way, the model proceeds downward and to the right, updating its expectation given the full history observed thus far. A series of back-to-back promising signs, colored in blue, reduce the predicted length of the crisis (e.g. withdraw from an area, mediation, mediation, withdraw), until the shootdown of the U-2 spy plane which briefly increases the expected length of the conflict, until back to back moves of signing a formal agreement, withdrawing, and an explicit end of crisis crater the expectation to only 4 steps remaining. At some steps, the behaviors of the top feature provide no clear signal, with small SHAP values (gray color).
+```{r, eval=T, fig.width=14, fig.height=12, output=T}
+print(p_Figure3)
+```
 
-The three example cases vary in their overall temporal signature. The Cuban Missile Crisis peaks at a high level of intensity early on with a reversion only right toward the end. The Gulf War has three distinct phases, starting first with the invasion of Kuwait, which is followed by furious negotiating and brinkmanship, which the model predicts will end the crisis. In the second phase, the coalition makes an ultimatum to invade and there is another round of negotiation. A final third phase signals the start of the war. Finally, the Crimea-Donbas crisis began with intensity but then stair stepped down once mediation between the two sides began.
+For example, at the first time-step of the Cuban Missile Crisis, the model estimates that there are likely to be 10 more steps, which is driven primarily by the global average and partly by the only information seen so far in the behaviors of just that first step. The behavior in that first step that most contributed to the prediction was that the United States discovered a fact, leading the model to increase the expected length of the crisis. The next step contained little information keeping the number of expected steps at 10 despite advancing 1. In the third step, the model lowers its expected length because of a rejection combined with the mobilization last observed only 2 steps prior. In this way, the model proceeds downward and to the right, updating its expectation given the full history observed thus far. A series of back-to-back promising signs, colored in blue, reduce the predicted length of the crisis (e.g. withdraw from an area, mediation, mediation, withdraw), until the shootdown of the U-2 spy plane which sparks an increase in the expected length of the conflict. It does not begin to decline again until the signing a formal agreement, a withdrawl from an area, and then an explicit end of crisis craters the expectation to only 4 steps remaining. At some steps, the behaviors of the top feature provide no clear signal, with small SHAP values (gray color).
 
-To see how representative these temporal trends are we next cluster the full corpus, shown in Figure 4 below. We find three general patterns, across 6 clusters: crises that resolve almost immediately, crises that begin to resolve but then revert to a high unsatisfying level of hostility, and then multiple kinds of wavy crises that ultimately resolve but have two or three rounds of improvement and reversion. We interpret this as evidence of intermittent rounds of fighting and bargaining within crises, such as in the Gulf War example above. This demonstrates the importance of scale in measurement. Some of these crises have episodes and breaks within them. Earlier we noted that beyond a certain scale of conflict, events are likely broken down across separate crises over years. How we interpret the consequences of a particular behavior turns on our beliefs about the importance of the short-, medium-, and long-term consequences of a statement, action, or outcome. Future work will need to pay close attention to the endogenous nature of how combatants define the start and end of a crisis, and how social scientists in turn choose to group events and periods into large constructs when conducting their analyses.
+The three example cases vary in their overall temporal signature. The Cuban Missile Crisis is U-shaped with a high level of intensity early on with a reversion right toward the end. The Gulf War has three distinct phases, starting first with the invasion of Kuwait, which is followed by furious negotiating and brinkmanship, which the model predicts will end the crisis. In the second phase, the coalition makes an ultimatum to invade and there is another round of negotiation. A final third phase signals the start of the war. Finally, the Crimea-Donbas crisis began with intensity but then stair stepped down once mediation between the two sides began.
 
-\< FIGURE 4 about here \>
+To see how representative these temporal trends are we next cluster the predicted number of remaining steps at each time point for every crises, shown in Figure 4 below. We find several general patterns similar to the case studies above, across 6 clusters: crises that resolve almost immediately, crises that begin to resolve but then revert to a high unsatisfying level of hostility, crises that stair step down in escalation, and finally crises that stair step upward over time. We interpret this as evidence of intermittent rounds of fighting and bargaining within crises. This demonstrates the importance of scale in measurement. Some of these crises have episodes and breaks within them. Earlier we noted that beyond a certain scale of conflict, events are likely broken down across separate crises over years. How we interpret the consequences of a particular behavior turns on our beliefs about the importance of the short-, medium-, and long-term consequences of a statement, action, or outcome. Future work will need to pay close attention to the endogenous nature of how combatants define the start and end of a crisis, and how social scientists in turn choose to group events and periods into large constructs when conducting their analyses.
 
-# 6.0 Discussion
 
-The research design here is purely observational and will require additional strong priors to make causal determinations from otherwise correlational findings. That said, we provide two different views on empirical regularities in crisis events that allow us to begin the process of a more intensive, and detailed, disentangling of causal claims. The first view lays out a large number of behaviors (140) on an intensity scale from most to least escalatory as represented by whether they tend to appear early in a blooming crisis (more escalatory) or later when a crisis is winding down to its conclusion (less escalatory). That proxy view very closely approximated our prior beliefs used in building the original ICBe ontology and distinguishing escalatory/uncooperative events from de-escalatory/cooperative events. The second view we provide complicates the picture more and asks what kinds of events are most indicative that a crisis is likely to end quickly. We find suggestive evidence that there may be certain types of events that can shock a crisis into a quick conclusion - such as military contests that result in territorial shifts, surrenders, or major realignments through coups or a third-party joining in a war. Likewise, we found suggestive evidence that certain kinds of behaviors are associated with causing or extending a crisis, like changing the provision of aid, targeting populations for imprisonment or expulsion, and ending negotiations.
+<!-- \< FIGURE 4 about here \> -->
 
-Much remains to be done to untangle relationships and to clarify cause and effect. Many of the relationships we identify are correlations, not causations. But this may be sufficient if the goal is simply to delineate factors that are associated with de-escalation, rather than making specific causal claims. At the same time, much of our findings suggest that the classical dialectic between deterrence and the spiral model is at best broadly descriptive and has little predictive value. Deterrence may be influencing behavior earlier on before a crisis manifests (i.e., general deterrence). Consistent with other findings in this volume (Beardsley, et al. 2024), we find little evidence in our analysis to support claims that immediate deterrence works as predicted in theory; actors are not de-escalating because an adversary escalated. At least, it is far from clear that this dynamic is in any way modal. Instead, it appears more usual for states to mirror image one another, escalating when the other does so, and vice versa. At the same time, again, these are not causal claims; two (or more) states may be escalating or de-escalating together, not because the other is escalating/de-escalating, but because both states are experiencing similar incentives, circumstances, or conditions. In brief, we have not answered the question that we posed at the outset—what causes escalation? Instead, as we hope we have made clear, existing explanations are far from adequate, while the abductive approach we explore here has much (more) to offer in highlighting relationships that can help to prompt new thinking.
+<!-- ![Figure 4](/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.pdf){width=100%}
+<img src="/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.pdf" style="width: 100%; height: auto;">  -->
+
+
+```{r, eval=T, fig.width=10, fig.height=6, output=T}
+plot(p_Figure4) #Plot figure 4 here
+```
+
+# Discussion
+
+The research design here is purely observational and will require additional strong priors to make causal determinations from otherwise correlational findings. That said, we provide two different views on empirical regularities in crisis events that allow us to begin the process of a more intensive, and detailed, disentangling of causal claims. The first view lays out a large number of behaviors (140) on an intensity scale from most to least escalatory as represented by whether they tend to appear early in a blooming crisis (more escalatory) or later when a crisis is winding down to its conclusion (less escalatory). That proxy view very closely approximated our prior beliefs used in building the original ICBe ontology and distinguishing escalatory/uncooperative events from de-escalatory/cooperative events. The second view we provide complicates the picture more and asks what kinds of events are most indicative that a crisis is likely to end soon. We find suggestive evidence that there may be certain types of events that can shock a crisis into a quick conclusion - such as military contests that result in territorial shifts, surrenders, or major realignments through coups or a third-party joining in a war. Likewise, we found suggestive evidence that certain kinds of behaviors are associated with causing or extending a crisis, like changes in international millitary alignment or shifts in internal institutions.
+
+Much remains to be done to untangle relationships and to clarify cause and effect. The relationships we identify are correlations, not causations. But this may be sufficient if the goal is simply to delineate factors that are associated with de-escalation, rather than making specific causal claims. Much of our findings suggest that the classical dialectic between deterrence and the spiral model is at best broadly descriptive and has little predictive value. Deterrence may be influencing behavior earlier on before a crisis manifests (i.e., general deterrence). Consistent with other findings (Beardsley, et al. 2024), we find little evidence in our analysis to support claims that immediate deterrence works as predicted in theory; actors are not de-escalating because an adversary escalated. At least, it is far from clear that this dynamic is in any way modal. Instead, it appears more usual for states to mirror image one another, escalating when the other does so, and vice versa.
 
 # References
 
@@ -510,899 +1578,4 @@ Zagare, Frank C. and D. Marc Kilgour. 2000. *Perfect Deterrence*. Cambridge, UK:
 
 Zagare, Frank C. and D. Marc Kilgour. 1998. “Deterrence Theory and the Spiral Model Revisited.” *Journal of Theoretical Politics* 10(1):59—87.
 
-```{r, eval=T, cache=F}
-library(tidyverse)
-library(tictoc)
-```
 
-```{r, eval=T}
-
-#https://docs.google.com/spreadsheets/d/1h1ooSdlnep4HTwzAyKK05DX7h0cCVOYb4rQzqg1qGdo
-#https://docs.google.com/spreadsheets/d/1QP2TQjY8Ipqeb_k2SbLkZBcHg-p0GRvO1atrnh5EChc/edit?usp=sharing
-#https://docs.google.com/spreadsheets/d/1QP2TQjY8Ipqeb_k2SbLkZBcHg-p0GRvO1atrnh5EChc/edit?usp=sharing
-library(tidyverse)
-library(tictoc)
-sheet_id <- "1QP2TQjY8Ipqeb_k2SbLkZBcHg-p0GRvO1atrnh5EChc" # Replace this with your actual sheet ID
-csv_link <- paste0("https://docs.google.com/spreadsheets/d/", sheet_id, "/gviz/tq?tqx=out:csv&sheet=", "prompts")
-# Read CSV data from the link
-llm_icbe_actors_handlabeled <- read_csv(csv_link) %>% janitor::remove_empty( "cols")
-
-#llm_icbe_actors_handlabeled  <- read_csv("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_in/llm_icbe_actors_handlabeled.csv", na = "")
-
-llm_icbe_actors_handlabeled_clean <- llm_icbe_actors_handlabeled %>% dplyr::select(value,new_name,wikidata) %>% distinct() %>% filter(!is.na(wikidata))
-
-#mapping to qcodes
-qcodes <- bind_rows(
-  llm_icbe_actors_handlabeled_clean %>% dplyr::select(value,value_normalized=new_name,value_qcode=wikidata),
-  llm_icbe_actors_handlabeled_clean %>% dplyr::select(value=new_name,value_normalized=new_name,value_qcode=wikidata)
-) %>% distinct() %>% filter(!value_qcode %>% str_detect(";")) #%>%
-  #mutate(value=value %>% tolower() %>% trimws() )
-
-```
-
-```{r, eval=T, cache=T}
-
-#A lot of our poor recall is just errors.
-#interact_location in the ICBe data has country names sometimes instead of the 5 options, I don't know why.
-library(tidyverse)
-library(stringi)
-library(glue)
-
-ICBeLLM <- read_csv("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_out/icbe_all_codings.csv", na = "")
-
-ICBeLLM_long_clean <- ICBeLLM %>% select(-chunk,-chunk_type,  -events)  %>% #crisno, sentence_number, sentence, thought_leaf:interact_territory
-                      mutate_all(as.character) %>% #across(thought_leaf:interact_territory
-                       pivot_longer(cols=-c('crisno',  'sentence',"event_number","event_number_subevent")) %>% #use subevent here but not below #'sentence_number' we exclude 'sentence_number' here because we need to allign it below
-                       filter(!is.na(value)) %>%
-                       filter(!name %>% str_detect('prompt')) %>%
-                       mutate( value = value %>% strsplit(";") ) %>% #here's where we split on ;
-                       unnest(value) %>%
-                       #recode some of the actor labels to match icbe
-                       left_join(qcodes %>%  distinct()   ) %>%
-                       mutate(value_normalized=ifelse(!is.na(value_normalized),value_normalized,value  )) %>%
-                       distinct() %>%
-                       #end recodes
-                       filter(!name %in% c("actors","actors_all","actors_cleaned","chunk_number","event","sentence_list")) %>%
-                       mutate(email_id="LLM") #%>%
-
-llm_actors <- ICBeLLM_long_clean %>% 
-              dplyr::filter( name %in% c('think_actor_a','say_actor_a','say_actor_b','do_actor_a','do_actor_b')) %>% 
-              dplyr::select(value) %>% distinct() %>%
-              filter(nchar(value)>1)
-  
-#New plan we're going to filter to only expert codings.
-#Dead sentences have no actors listed in the wide, just use that.
-ICBe_V1.1_long <- readRDS("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_in/ICBe_V1.1_long.Rds")
-ICBe_V1.1_long %>% count(email_id ) #from 118 people
-ICBe_V1.1_long %>% count(varname_normalized )
-dim(ICBe_V1.1_long) #692,574 almost 700k tokens
-
-#Maybe we have to go to qcodes instead?
-
-#ICBe_V1.1_long %>% dplyr::select(varname_normalized,value_normalized,value_qcode) %>% distinct() %>% filter(!duplicated(value_normalized)) %>% arrange() # filter(!is.na(value_qcode))
-#llm_icbe_actors %>% write_csv("/home/skynet3/Downloads/llm_icbe_actors.csv")
-
-
-idbe_do_leaf <- ICBe_V1.1_long %>%
-                filter(varname_normalized %in% 
-                         c('act_cooperative','act_deescalate','act_escalate','act_uncooperative',
-                           #'do_kind', #this the escalatory, coop, etc.
-                           'interact_decreasecoop','interact_deescalate','interact_escalate','interact_increasecoop') ) %>%
-                mutate(varname_normalized="do_leaf") %>%
-                group_by(email_id, crisno, sentence_number_int_aligned, sentence_span_text, event_number_int, varname_normalized) %>%  #value_normalize
-                summarise(value_normalized= value_normalized %>% unique() %>% paste0(collapse=";")) %>%
-                separate_rows(value_normalized , sep=";") %>%
-                ungroup() %>%
-                distinct() 
-  
-ICBe_V1.1_long_clean <-  bind_rows(
-                        idbe_do_leaf,
-                         ICBe_V1.1_long %>% filter(!varname_normalized %in% c('act_cooperative','act_deescalate','act_escalate','act_uncooperative',
-                                                                              'do_kind', 
-                                                                              'interact_decreasecoop','interact_deescalate','interact_escalate','interact_increasecoop') )
-                      ) %>%
-                        #Convert some llm names into the dumb icbe equivalents
-                         mutate(varname_normalized = case_when(
-                            varname_normalized ==  "do_kind" ~ "do_leaf",
-                            varname_normalized == "thinkkind" ~ "thought_leaf",
-                            varname_normalized == "sayintkind" ~ "speech_leaf"  ,
-                            TRUE ~ varname_normalized  # This line keeps all other values as they are
-                          )) %>% distinct() %>%
-                        left_join(qcodes %>% dplyr::select(value_normalized=value,value_normalized2=value_normalized,value_qcode2=value_qcode) ) %>%
-                        mutate(value_normalized=ifelse(!is.na(value_normalized2),value_normalized2,value_normalized)) %>%
-                        mutate(value_qcode=ifelse(!is.na(value_qcode2),value_qcode2,value_qcode)) %>%
-                        dplyr::select(-value_qcode2,-value_normalized2)
-  
-  
-                                             
-ICBe_V1.1_long_clean %>% count(varname_normalized )
-
-
-
-icbe_actors <- ICBe_V1.1_long_clean %>% 
-               dplyr::filter( varname_normalized %in% c('think_actor_a','say_actor_a','say_actor_b','do_actor_a','do_actor_b')) %>%
-               dplyr::select(value_normalized,value_qcode) %>% distinct()
-
-llm_icbe_actors <- llm_actors %>% mutate(llm=1) %>% full_join(icbe_actors %>% mutate(icbe=1) %>% rename(value=value_normalized))
-llm_icbe_actors %>% write_csv("/home/skynet3/Downloads/llm_icbe_actors.csv")
-
-
-#Combine both by turning ICBeLLM into ICBe
-icbe_llm_long <- bind_rows(
-  ICBeLLM_long_clean %>% dplyr::select(email_id,crisno,sentence, event_number ,event_number_subevent,varname_normalized=name,value_normalized) %>% mutate_all(as.character) %>% distinct(),
-  ICBe_V1.1_long_clean %>% dplyr::select(email_id,crisno,sentence_number=sentence_number_int_aligned,sentence=sentence_span_text,event_number=event_number_int,varname_normalized,value_normalized) %>% mutate_all(as.character) %>% distinct()
-) %>% distinct() %>%
-  mutate(value_normalized = value_normalized %>% tolower() %>% trimws()) %>% #just to keep my life easier I'm going to lower case all the values just to make sure the merges happen smoother
-  group_by(crisno,sentence) %>%
-    mutate(sentence_number=sentence_number %>% max(na.rm=T)) %>%
-  ungroup()
-  
-dim(icbe_llm_long) #1509719 #1,444,006 #1,532,520 we roughly double the number of tokens collected.
-
-#this is somehow slow
-#664,502
-icbe_llm_long_votes <- icbe_llm_long %>%
-                       distinct() %>%
-                       mutate(votes_llm    = email_id %>%   str_detect("LLM")   ) %>%
-                       mutate(votes_expert = email_id %>%  str_detect("expert")   ) %>%
-                       mutate(votes_novice = !(email_id %>%  str_detect("expert|LLM")   ))  %>%
-                      
-                       group_by(crisno,sentence,varname_normalized,value_normalized) %>% #we throw away all notion of events here and just ask how many people voted for that sentence-token completely independent of the context
-                       filter(!duplicated(email_id)) %>% #you can have multiple events per sentence, we only want to count one vote per email-sentence-token
-                       mutate(
-                         votes_llm= votes_llm %>% sum(na.rm=T),
-                         votes_expert= votes_expert %>% sum(na.rm=T),
-                         votes_novice= votes_expert %>% sum(na.rm=T)
-                       ) %>%
-                         #mutate(votes_novice = (!(email_id %>% unique() %>% str_detect("expert|LLM"))) %>% sum() ) %>%
-                         #mutate(sentence_number = max(sentence_number, na.rm=T) ) %>% 
-                       ungroup() #We don't summarise, keep everything in original shape
-  
-icbe_llm_long_votes %>% count(votes_llm,votes_expert) # #77,015 votes where the LLM saves it. But that's really only like 30k tokens because in this version it's still individual votes
-
-
-#419,683
-icbe_llm_long_votes_keep <- icbe_llm_long_votes %>% 
-                            filter(email_id %>%  str_detect("expert|LLM")) %>%
-                            #filter( (votes_llm + votes_expert ) >=2  |  (votes_expert==1 & votes_novice>0   )    ) #Ok so 2 expert votes, or 1 expert vote and 1 llm vote, or 1 expert vote and 1 novice vote
-                            #filter( (votes_llm + votes_expert + (votes_novice>0)  ) >=2      ) #Require either 2 expert votes, or and LLM vote+ either an expert or novice vote
-                            filter( (votes_llm+votes_expert)>=2      )  #keeping any with at least 2 votes (expert or llm). Keep in mind the numbers won't make sense for quite some time
-                            #filter((votes_expert)>=2)  #keeping any with at least 2 votes (expert or llm). Keep in mind the numbers won't make sense for quite some time
-
-icbe_llm_long_votes_keep_actors <- icbe_llm_long_votes_keep %>%  
-                                   mutate(say_actor_a= ifelse(varname_normalized %in% c('say_actor_a'), value_normalized, NA)) %>%
-                                   mutate(say_actor_b= ifelse(varname_normalized %in% c('say_actor_b'), value_normalized, NA)) %>%
-                                   mutate(think_actor_a= ifelse(varname_normalized %in% c('think_actor_a'), value_normalized, NA)) %>%
-                                   mutate(do_actor_a= ifelse(varname_normalized %in% c('do_actor_a'), value_normalized, NA)) %>%
-                                   mutate(do_actor_b= ifelse(varname_normalized %in% c('do_actor_b'), value_normalized, NA)) %>%
-                                   #we're going to leave out sentence number
-                                   #I think we're folding subebevents up into the same actor list. So the event could be say actor, and subevent the actor
-                                   group_by(email_id, crisno, sentence, event_number ) %>%  #event_number_subevent . We flatten subevents for LLM here. We still keep email and events separated. Our next grouping will be on actors
-                                   fill(do_actor_a,do_actor_b,say_actor_a,say_actor_b,think_actor_a, .direction ="updown") %>% 
-                                   distinct()
-
-
-#Note the sentence numbers are broken!!!!
-icbe_llm_long_votes_keep_actors_events <- icbe_llm_long_votes_keep_actors %>%  ungroup() %>%
-                                          dplyr::select(-email_id,-event_number,-event_number_subevent) %>% distinct() %>%
-                                          distinct() %>%
-                                          filter(!varname_normalized %in% c("think_actor_a", "say_actor_a", "say_actor_b", "do_actor_a", "do_actor_b")) %>%
-                                          pivot_wider(names_from = varname_normalized,
-                                                    values_from = value_normalized,
-                                                    id_cols = c("crisno", "sentence_number", "sentence", "think_actor_a", "say_actor_a", "say_actor_b", "do_actor_a", "do_actor_b"),
-                                                    values_fn=~ paste0(.x, sep=";", collapse=";") ) %>% 
-                                          mutate_at(vars(crisno,sentence_number), as.numeric) %>%
-                                          arrange(crisno, sentence_number)
-
-icbe_llm_long_votes_keep_actors_events_small <- icbe_llm_long_votes_keep_actors_events %>%
-                                                dplyr::select(-starts_with("condition"),
-                                                              -event_type,
-                                                              -sentence_events,
-                                                              -raterconfidence_reason_survey,
-                                                              -raterconfidence_reason,
-                                                              -raterconfidence,
-                                                              -think_sentence_events,
-                                                              -consequence) %>%
-                                                mutate(across(where(is.character), ~str_remove(., ";$"))) %>%
-                                                mutate(across(where(is.character), ~str_remove(., "^;"))) %>%
-                                                mutate(across(where(is.character), ~str_replace_all(., ";+",";"))) %>%
-  dplyr::select(crisno,sentence_number,sentence,think_actor_a,thought_leaf,say_actor_a,say_actor_b,speech_leaf,do_actor_a,do_actor_b,do_leaf, everything())
-
-#19,252
-#27,866
-#11,374
-#17,289
-#24,736
-#icbe_llm_long_votes_keep_actors_events_small %>% filter(!is.na(think_actor_a) | !is.na(say_actor_a) | !is.na(say_actor_b) | !is.na(do_actor_a) | !is.na(do_actor_b)  )
-
-#1,111,084 tokens
-
-
-
-
-```
-
-```{r, eval=F}
-
-#This doesn't contain any known not events.
-df <- icbe_llm_long_votes_keep_actors_events_small %>% 
-  dplyr::select(sentence , thought_leaf , think_actor_a ,  speech_leaf, say_actor_a , say_actor_b , do_leaf, do_actor_a , do_actor_b) %>%
-  mutate(actor_count = 8 - (is.na(thought_leaf) +  is.na(think_actor_a) + is.na(speech_leaf) + is.na(say_actor_a) + is.na(say_actor_b) + is.na(do_leaf) + is.na(do_actor_a) + is.na(do_actor_b) )) %>%
-  arrange(desc(actor_count)) %>%
-  filter(!duplicated(sentence)) %>%
-  filter(actor_count>=2) %>%
-  filter(!(!is.na(do_leaf) & is.na(do_actor_a))) %>%
-  filter(!(!is.na(do_leaf) & is.na(do_actor_b))) %>%
-  filter(!(!is.na(do_actor_a) & is.na(do_leaf))) %>%
-  filter(!(!is.na(speech_leaf) & is.na(say_actor_a))) %>%
-  filter(!(!is.na(speech_leaf) & is.na(say_actor_b))) %>%
-  filter(!(!is.na(say_actor_a) & is.na(speech_leaf))) %>%
-  filter(!(!is.na(thought_leaf) & is.na(think_actor_a))) %>%
-  filter(!(!is.na(think_actor_a) & is.na(thought_leaf))) %>%
-  mutate(random=runif(n())) %>%
-  mutate(across(contains("leaf"), ~ str_to_title(.))) %>%
-  mutate(across(contains("actor"), ~ str_to_title(.))) %>%
-  arrange(random) %>%
-  left_join( ICBeLLM %>% dplyr::select(chunk,sentence) %>% distinct() ) %>%
-  filter( actor_count==8 |
-          (actor_count==6 & !is.na(speech_leaf) & !is.na(do_leaf))  |
-          (actor_count==3 & !is.na(do_leaf)) |
-          (actor_count==2 & !is.na(thought_leaf))                   
-          ) %>%
-  group_by(actor_count,do_leaf,speech_leaf,thought_leaf) %>%
-    filter(row_number() < 2) %>%
-    #filter(random<0.04) %>%
-  ungroup() %>%
-  filter(row_number() < 101) %>%
-  dplyr::select(-actor_count , -random) 
-
-
-df %>% mutate(
-  example =
-    paste0(sentence,"\n",
-           "{ ", " }")
-)
-
-df_final <- df %>%
-  mutate(
-    example = paste0(
-      "Context: \"", chunk, "\"\n", 
-      "Specific Sentence: \"", sentence, "\"\n", 
-      "Event Revealed by Specific Sentence: ", "{ ", 
-      "\"Perception\" : \"", thought_leaf, "\" , ",
-      "\"Perceiver\" : \"", think_actor_a, "\" , ",
-      "\"Speech\" : \""  , speech_leaf, "\" , ",
-      "\"Speaker\" : \"", say_actor_a, "\" , ",
-      "\"Audience\" : \"", say_actor_b, "\" , ",
-      "\"Physical Action\" : \"" , do_leaf, "\" , ",
-      "\"Actor\" : \"", do_actor_a, "\" , ",
-      "\"Target\" : \"", do_actor_b, "\" } \n" #,
-      #"Coding Justification : \n\n"
-    )   %>% 
-    str_replace_all("\"NA\"", "null")
-  )
-
-df_final %>% pull(example) %>% writeLines("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_out/icbe_actor_examples.txt")
-
-```
-
-```{r, eval=T}
-
-#Now need to start working on ordering and length harder
-
-
-#We're going to call the sentence the unit of time. Things described in the same sentence are 0 apart.
-#Ok here's the idea. We're going to put all of this on the left hand side. 7 outcomes. And then on the right hand side, we're going to one hot encode all of these and make the features # of sentences since.
-#17,289
-
-library(fastDummies); #install.packages("fastDummies")
-x_all <-  icbe_llm_long_votes_keep_actors_events_small %>% 
-              filter(!is.na(think_actor_a) | !is.na(say_actor_a) | !is.na(say_actor_b) | !is.na(do_actor_a) | !is.na(do_actor_b)  ) %>% #require at least one actor
-              filter(!is.na(thought_leaf) | !is.na(speech_leaf) | !is.na(do_leaf)   ) %>% #and at least one action
-              dplyr::select(crisno , sentence_number ,thought_leaf,speech_leaf,do_leaf,interact_domains,interact_units,interact_territory,interact_forces, interact_fatalities) %>%
-              pivot_longer(
-                cols = !c(crisno, sentence_number), # Specify all columns except crisno and sentence_number
-                names_to = "variable", # Name of the new column for variable names
-                values_to = "value"    # Name of the new column for values
-              ) %>%
-              filter(!is.na(value)) %>%
-              separate_rows(value, sep=";") %>%
-              mutate(value=value %>% trimws()) %>%
-              filter(!is.na(value)) %>%
-              mutate(variable_value=paste0(variable,"__",value)) %>%
-              dplyr::select(-variable,-value) %>%
-              dummy_cols("variable_value", remove_first_dummy = F, remove_selected_columns=T) %>%
-              group_by(crisno, sentence_number) %>%
-              summarise_all(max, na.rm=T) %>% 
-              ungroup()
-
-#Alright here we go. 1 million obs. Unit of obs is the crisis-sentence-token, Y is 0 or 1 for whether that token happened in that sentence.
-y_all_long <- x_all %>%
-              pivot_longer(
-                cols = -c(crisno, sentence_number), # Exclude ID columns from the pivot
-                names_to = "variable", # Name of the new column for variable names
-                values_to = "Y"    # Name of the new column for values
-              )
-
-calculate_counts <- function(x) {
-  # Replace 0s with NAs and then replace NAs with the cumulative count since last non-NA
-  na_if(x, 0) %>% 
-    fill(., .direction = "down") %>% 
-    with(., ifelse(is.na(.), NA, seq_along(.) - .))
-}
-
-#7,126
-x_all_timesince <- y_all_long %>%
-                   arrange(crisno, variable, sentence_number ) %>%
-                   group_by(crisno, variable) %>% # Group by crisno
-                      mutate(Y=Y %>% cumsum()) %>%
-                   ungroup() %>%
-                   mutate(time_since=1) %>%
-                   group_by(crisno, variable,Y) %>% # Group by crisno
-                      mutate(time_since=time_since %>% cumsum()) %>%
-                   ungroup() %>%
-                   mutate(time_since=time_since -1) %>%
-                   mutate(time_since=ifelse(Y==0, 100, time_since))  %>%  #set it to a very large value, so smaller means more recent
-                   select(-Y) %>% 
-                   arrange(crisno , variable,sentence_number) %>%
-                   #group_by(crisno , variable) %>%
-                   #  mutate(time_since=time_since %>% lag()) %>% #note to self we're not going to lag anymore. We're going to predict the time until end of crisis as a function of what happens now
-                   #ungroup() %>%
-                   pivot_wider(names_from = variable, values_from = time_since, values_fill = list(time_since = 100))
-
-
-yx_all <- y_all_long %>% left_join(x_all_timesince) %>% na.omit() %>% mutate(variable=variable %>% as.factor()) %>%
-            arrange(crisno,variable, sentence_number) %>%
-            group_by(crisno,variable) %>%
-            mutate(t=row_number()) %>%
-            ungroup()
-dim(yx_all) #931140 #997640    144
-
-
-#yx_all %>% dplyr::select(crisno,variable, sentence_number,t)
-
-              
-```
-
-```{r, eval=T, fig.width=12, fig.height=14, output=F}
-
-y_all_long %>% filter(Y==1) %>% 
-  group_by(crisno) %>%
-    mutate(sentence_number=sentence_number-min(sentence_number)) %>%
-    mutate(sentence_number=sentence_number/max(sentence_number)) %>%
-  ungroup() %>%
-  group_by(variable) %>%
-  summarise(sentence_number =sentence_number %>% mean())
-
-
-df = y_all_long %>% filter(Y==1) %>% 
-  group_by(crisno) %>%
-    mutate(sentence_number=sentence_number-min(sentence_number)) %>%
-    mutate(sentence_number=sentence_number/max(sentence_number)) %>%
-  ungroup() 
-library(betareg) #install.packages('betareg')
-library(lmtest) #install.packages('lmtest')
-library(sandwich) #install.packages('sandwich')
-
-library(glm2) #install.packages('glm2')
-
-# Fit the model
-model <- glm(cbind(sentence_number, 1 - sentence_number) ~ variable, 
-             family = binomial(link = "logit"), 
-             data = df)
-
-library(sandwich)
-library(lmtest)
-# Compute robust standard errors
-robust_se <- vcovHC(model, type = "HC1", cluster = ~ crisno)
-mycoefs <- coeftest(model, vcov = robust_se)
-#summary(coeftest(model, vcov = robust_se))
-#predicted_values <- predict(model, type = "response")
-
-
-# Creating a dataframe
-logit_estimates <- data.frame(Estimate = mycoefs[,1], 
-                    std_error = mycoefs[,2], 
-                    t_value  = mycoefs[,3], 
-                    p_value = mycoefs[,4])
-
-# Calculate the confidence intervals on the logit scale
-logit_ci_lower <- logit_estimates$Estimate - 1.96 * logit_estimates$std_error
-logit_ci_upper <- logit_estimates$Estimate + 1.96 * logit_estimates$std_error
-
-# Transform the confidence intervals back to the probability scale
-ci_lower <- 1 / (1 + exp(-logit_ci_lower))
-ci_upper <- 1 / (1 + exp(-logit_ci_upper))
-
-# Combine with predicted probabilities
-predicted_probabilities <- 1 / (1 + exp(-logit_estimates$Estimate))
-result <- data.frame(
-  PredictedProbability = predicted_probabilities,
-  CILower = ci_lower,
-  CIUpper = ci_upper
-)
-
-```
-
-```{r, eval=T, fig.width=12, fig.height=14, output=T}
-
-library(ggplot2)
-library(dplyr)
-library(stringr)
-library(ggtext)
-#install.packages("ggtext")
-# Plotting
-temp <- result %>%
-  mutate(variable=rownames(mycoefs)) %>%
-  filter(!variable %in% "(Intercept)") %>%
-  #tibble::rownames_to_column(var = "variable") %>%
-
-  mutate(color_category = case_when(
-    #grepl("action", variable) ~ "black",
-    grepl("speech", variable) ~ "blue",
-    grepl("thought", variable) ~ "darkorange",
-    grepl("fatalities|forces_|domains_|territory_|units_", variable) ~ "purple",
-    TRUE ~ "black"  # Default color
-  )) %>%
-  mutate(variable = variable %>% str_replace_all("^variable","")) %>%
-  mutate(variable = variable %>% str_replace_all("variable_value_","")) %>%
-  mutate(variable = variable %>% str_replace_all("leaf__","")) %>%
-  mutate(variable = variable %>% str_replace_all("interact_","")) %>%
-  mutate(variable = variable %>% str_replace_all("do_","")) %>%
-  mutate(variable = variable %>% str_replace_all("thought_","")) %>%
-  mutate(variable = variable %>% str_replace_all("speech_","")) %>%
-  mutate(variable = variable %>% str_replace_all("domains__|units__|territory__","")) %>%
-  mutate(variable = variable %>% str_replace_all("forces__","(forces) ")) %>%
-  mutate(variable = variable %>% str_replace_all("fatalities__","(fatalities) ")) %>%
-  
-  mutate(aggression_change = case_when(
-    variable %in% c('annex', 'assassination', 'assert autonomy against', 'assert political control over', 
-                    'attack', 'battle/clash', 'blockade', 'bombard', 'border violation', 'break off negotiations', 
-                    'continuation of previous fighting', 'coup', 'declaration of war', 'deployment to area', 
-                    'end access', 'expel', 'fortify', 'human rights violation', 'imprison', 'invasion/occupation', 
-                    'join ongoing war', 'join war on behalf',  'mass killing', 'mobilization', 
-                    'no fly zone', 'propaganda', 'raise in alert', 'restrict rights', 'riot', 'show of force', 
-                    'strike',  'terrorism', 'violate terms of treaty', 'weapons test', "protest",'withdraw diplomats','end unspecified aid','inspections', 'end unspecified cooperation',
-                    'end economic aid', 'end economic cooperation', 'exercise', 
-                    'end humanitarian aid', 'terminate treaty') ~ 'increase',
-    variable %in% c('cease fire', 'cede territory', 'de-mobilization', 'declaration of peace', 'decolonize', 
-                    'discussion', 'economic cooperation', 
-                    'end exercise',  'end military cooperation', 'end riot',  
-                     'end weapons test', 'formal military alliance', 
-                    'general political support', 'humanitarian aid', 'institutions change', 
-                    'intelligence cooperation', 'leadership change', 'leave alliance', 'mediation', 'meeting', 
-                    'military aid', 'military cooperation', 'mutual defense pact', 'natural conclusion of diplomacy', 
-                    'political succession', 'provide rights', 'reduce control over', 'reduce human rights violation', 
-                    'reduce terrorism', 'remove fortify', 'retreat', 'settle dispute', 'sign formal agreement',   'withdraw from area', 
-                    'withdraw from war',"end blockade","unspecified cooperation",'lower alert','withdraw behind border','ally','surrender') ~ 'decrease',
-    TRUE ~ 'neutral'
-  )) %>%
-  mutate(color_category = ifelse(aggression_change %in% "increase","red",color_category)) %>%
-  mutate(color_category = ifelse(aggression_change %in% "decrease","forestgreen",color_category))
-
-
-temp2 <- temp %>% dplyr::select(PredictedProbability, variable, color_category) %>% distinct() %>% arrange(PredictedProbability)
-  
-temp %>%
-  ggplot( aes(x = reorder(variable, PredictedProbability), y = PredictedProbability)) +
-  geom_point(aes(color = color_category)) +  # Adds points for means
-  geom_errorbar(aes(ymin = CILower, ymax =  CIUpper,color = color_category), width = 0.2) +  # Adds error bars
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotates x-axis labels for readability
-  labs(x = "Behavior", 
-       y = "Early <-----------------------------------------------------------------------------------------------------------------------------------------------> Late\nMean Relative Location in Crisis Narrative", 
-       title = "When Behaviors Tend to Happen within a Crisis",
-       subtitle="Fractional Logit (95% CI clustered on Crisis)\nThoughts (orange); Speech (blue); Escalatory Actions (red); De-escalatory Actions (green); Action Details (Purple)") +
-  coord_flip()  +
-  scale_color_identity() +
-  theme(axis.text.y = element_text( colour = temp2$color_category) )  #angle = 0, hjust = 0,
-  
-  
-```
-
-```{r, eval=T, fig.width=12, fig.height=14, output=F}
-
-library(caret)
-library(fastDummies); #install.packages("fastDummies")
-#x_all 
-y_all_timeuntil <- x_all %>% dplyr::select(crisno, sentence_number) %>%
-                   arrange(crisno, sentence_number) %>%
-                   group_by(crisno) %>%
-                      mutate(Y=  n() - row_number() ) %>%  #we have to switch to number of events because the sentence numbers aren't the number of actual events
-                      #mutate(Y =  log(Y+1) ) %>%  #we have to switch to number of events because the sentence numbers aren't the number of actual events
-                   ungroup() 
-
-yx_all_timeuntil <- y_all_timeuntil %>% left_join(x_all_timesince) %>%
-                    mutate(crisis_block = floor(crisno / 100) )
-
-yx_all_timeuntil %>% count(crisis_block)
-
-# Load the LightGBM and SHAP libraries
-library(lightgbm)
-
-# Assuming 'data' is your dataset and 'target' is the binary target variable
-yx_all_timeuntil$Y <- as.numeric(yx_all_timeuntil$Y)  # Ensure the target is a numeric for regression
-table(yx_all_timeuntil$Y)
-
-# Split the data into training, validation, and test sets
-set.seed(123)  # for reproducibility
-#train_idx <- id_crisis %>% sample(size = 0.8 * length(id_crisis))
-
-id_crisis <- yx_all_timeuntil %>% pull(crisno) %>% unique()
-folds <- createFolds(yx_all_timeuntil$crisno %>% unique(), k = 10) #doing 10 fold
-shap_values_list <- list()
-predictions_list <- list()
-for(i in 1:length(folds)){
-  print(i)
-
-  test_idx <- folds[[i]]
-  valid_idx <- id_crisis %>% setdiff(test_idx) %>% sample(size = 0.05 * length(id_crisis)) #sample 10 percent of the remaining
-  train_idx <- id_crisis %>% setdiff( c(test_idx, valid_idx)) #training is what's left
-
-  train_data <- yx_all_timeuntil %>% filter(crisno %in% train_idx)
-  valid_data <- yx_all_timeuntil %>% filter(crisno %in% valid_idx) 
-  test_data  <- yx_all_timeuntil %>% filter(crisno %in% test_idx)
-  
-  dim(train_data)
-  dim(valid_data)
-  dim(test_data)
-  
-  table(train_data$Y)
-  table(valid_data$Y)
-  
-  # Prepare the datasets for LightGBM
-  dtrain <- lgb.Dataset(data = train_data %>% dplyr::select(starts_with('variable'),crisis_block) %>% data.matrix( ) , label = as.integer(train_data$Y) ) #
-  dvalid <- lgb.Dataset(data = valid_data %>% dplyr::select(starts_with('variable'),crisis_block) %>% data.matrix( ) , label = as.integer(valid_data$Y) ) #
-  
-  # Define parameters
-  params <- list(
-    #objective = "regression",
-    #objective = "poisson",
-    objective = "regression_l1",  #"regression_l1", #"gamma",    
-    metric = "mae", #"mean_squared_error" ,  # Area under the precision-recall curve
-    learning_rate = 0.01 , #0.1 seems to be the sweet spot right now
-    num_leaves = 31, #31#,
-    feature_fraction = 0.6, #0.6,
-    bagging_fraction = 0.6, #0.6 ,
-    bagging_freq = 1 #,
-    #lambda_l1=0.2
-  )
-  
-  # Train the model with early stopping
-  model <- lgb.train(
-    params = params,
-    data = dtrain,
-    valids = list(valid = dvalid),
-    nrounds = 5000,
-    early_stopping_rounds = 10,
-    verbose = 1
-  )
-  # Extract SHAP values
-  shap_values <- NULL
-  shap_values <- predict(model,  test_data %>% dplyr::select(starts_with('variable'),crisis_block) %>% data.matrix( ) , predcontrib = TRUE)
-  predictions_df <- test_data
-  predictions_df$Y_hat <- predict(model,  test_data %>% dplyr::select(starts_with('variable'),crisis_block) %>% data.matrix( ) , predcontrib = F)
-  predictions_list[[i]] <- predictions_df
-  shap_values_df <- shap_values %>% 
-                    as.data.frame() %>% setNames(c(test_data %>% dplyr::select(starts_with('variable'),crisis_block) %>% colnames(), 'intercept')) %>%
-                    cbind(test_data %>% dplyr::select(crisno, sentence_number, Y))
-  shap_values_list[[i]] <- shap_values_df
-
-}
-
-predictions_oos <- predictions_list %>% bind_rows()
-
-temp <- predictions_oos %>% dplyr::select(crisno, sentence_number,     Y, Y_hat)
-
-temp %>% ggplot(aes(x=Y, y=Y_hat)) + geom_point() + geom_smooth()
-
-mean(sqrt((temp$Y_hat - temp$Y)^2))  #5.324894 #5.371377 #5.375813 #5.496948 #5.5 #5.57 #5.63 #5.76 #5.78 #5.8 with poisson #Rmse of 5.96 with bagging. 6 events. 0.01 learning rate faster and same. Higher still faster and same.
-
-#Log was worse
-#mean(sqrt((exp(temp$Y_hat) - exp(temp$Y) )^2)) #6.723754 #5.496948 #5.5 #5.57 #5.63 #5.76 #5.78 #5.8 with poisson #Rmse of 5.96 with bagging. 6 events. 0.01 learning rate faster and same. Higher still faster and same.
-
-```
-
-```{r, eval=T, fig.width=12, fig.height=14, output=F, cache=F}
-
-dim(shap_values) #7126  141
-#shap_values_df <- shap_values %>% 
-#                  as.data.frame() %>% setNames(c(yx_all_timeuntil %>% dplyr::select(starts_with('variable')) %>% colnames(), 'intercept')) %>%
-#                  cbind(yx_all_timeuntil %>% dplyr::select(crisno, sentence_number, Y))
-shap_values_df_long <- shap_values_list %>% bind_rows() %>%
-                        pivot_longer(
-                          cols = !c(crisno, sentence_number, Y), # Specify all columns except crisno and sentence_number
-                          names_to = "feature", # Name of the new column for variable names
-                          values_to = "shap"    # Name of the new column for values
-                        ) %>%
-                      left_join(
-                          x_all_timesince %>%
-                            pivot_longer(
-                              cols = !c(crisno, sentence_number), # Specify all columns except crisno and sentence_number
-                              names_to = "feature", # Name of the new column for variable names
-                              values_to = "value"    # Name of the new column for values
-                            ) )
-
-#Total contribution
-feature_shap_abs_total <- shap_values_df_long %>% group_by(feature) %>% summarise(shap_abs_total = shap %>% abs() %>% sum()) %>% arrange(shap_abs_total)
-
-#Contribution by feature
-temp <- shap_values_df_long %>% filter(!is.na(value) & value!=100)
-
-
-```
-
-```{r, eval=T, fig.width=12, fig.height=14, output=T}
-
-temp1 <- shap_values_df_long %>% filter(!is.na(value) & value!=100) %>% 
-          #filter(y_variable=="variable_value_thought_leaf__end of crisis") %>%  #doesn't apply on this outcome
-          dplyr::select(feature,shap, value) %>% group_by(feature, value) %>% summarise(shap=shap %>% mean()) %>%
-          filter(value<=20) %>% #really only loses start of crisis examples
-          group_by(feature) %>%
-            mutate(shap_total= ((shap/( (value+1)^2) ) %>% abs()) %>% sum()) %>% #filter near 0 values #we discount the further back you go
-          ungroup() %>%
-          #filter(shap_total>0.05) %>%
-          filter(shap_total>0.005) %>%
-  
-          mutate(color_category = case_when(
-            #grepl("action", feature) ~ "black",
-            grepl("speech", feature) ~ "blue",
-            grepl("thought", feature) ~ "darkorange",
-            grepl("fatalities|forces_|domains_|territory_|units_", feature) ~ "purple",
-            TRUE ~ "black"  # Default color
-          )) %>%
-          mutate(feature = feature %>% str_replace_all("feature_value_","")) %>%
-          mutate(feature = feature %>% str_replace_all("leaf__","")) %>%
-          mutate(feature = feature %>% str_replace_all("interact_","")) %>%
-          mutate(feature =  feature %>% as.factor()) %>% 
-          group_by(feature) %>%
-            mutate(test=shap %>% sum()) %>%
-          ungroup() %>%
-          #filter(value<30) %>% #really only loses start of crisis examples
-          mutate(feature = feature %>% str_replace_all("^feature","")) %>%
-          mutate(feature = feature %>% str_replace_all("variable_value_","")) %>%
-          mutate(feature = feature %>% str_replace_all("leaf__","")) %>%
-          mutate(feature = feature %>% str_replace_all("interact_","")) %>%
-          mutate(feature = feature %>% str_replace_all("do_","")) %>%
-          mutate(feature = feature %>% str_replace_all("thought_","")) %>%
-          mutate(feature = feature %>% str_replace_all("speech_","")) %>%
-          mutate(feature = feature %>% str_replace_all("domains__|units__|territory__","")) %>%
-          mutate(feature = feature %>% str_replace_all("forces__","(forces) ")) %>%
-          mutate(feature = feature %>% str_replace_all("fatalities__","(fatalities) ")) %>%
-          mutate(aggression_change = case_when(
-            feature %in% c('annex', 'assassination', 'assert autonomy against', 'assert political control over', 
-                            'attack', 'battle/clash', 'blockade', 'bombard', 'border violation', 'break off negotiations', 
-                            'continuation of previous fighting', 'coup', 'declaration of war', 'deployment to area', 
-                            'end access', 'expel', 'fortify', 'human rights violation', 'imprison', 'invasion/occupation', 
-                            'join ongoing war', 'join war on behalf',  'mass killing', 'mobilization', 
-                            'no fly zone', 'propaganda', 'raise in alert', 'restrict rights', 'riot', 'show of force', 
-                            'strike',  'terrorism', 'violate terms of treaty', 'weapons test', "protest",'withdraw diplomats','end unspecified aid','inspections', 'end unspecified cooperation',
-                            'end economic aid', 'exercise', 'end economic cooperation', 
-                            'end humanitarian aid', 'terminate treaty') ~ 'increase',
-            feature %in% c('cease fire', 'cede territory', 'de-mobilization', 'declaration of peace', 'decolonize', 
-                            'discussion', 'economic cooperation', 
-                            'end exercise',  'end military cooperation', 'end riot',  
-                             'end weapons test',  'formal military alliance', 
-                            'general political support', 'humanitarian aid', 'institutions change', 
-                            'intelligence cooperation', 'leadership change', 'leave alliance', 'mediation', 'meeting', 
-                            'military aid', 'military cooperation', 'mutual defense pact', 'natural conclusion of diplomacy', 
-                            'political succession', 'provide rights', 'reduce control over', 'reduce human rights violation', 
-                            'reduce terrorism', 'remove fortify', 'retreat', 'settle dispute', 'sign formal agreement',   'withdraw from area', 
-                            'withdraw from war',"end blockade","unspecified cooperation",'lower alert','withdraw behind border','ally','surrender') ~ 'decrease',
-            TRUE ~ 'neutral'
-          )) %>%
-          mutate(color_category = ifelse(aggression_change %in% "increase","red",color_category)) %>%
-          mutate(color_category = ifelse(aggression_change %in% "decrease","forestgreen",color_category)) %>%
-          mutate(feature =  forcats::fct_reorder(.f=feature, .x=test) ) 
-
-temp2 <- temp1  %>% arrange(test) %>% dplyr::select(feature , color_category) %>% distinct()
-
-temp1 %>%
-  ggplot( aes(x = factor(value), y = feature, fill = shap)) +
-  geom_tile() +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                       midpoint = 0, limit = c(min(temp1$shap), max(temp1$shap))) +
-  theme_minimal() +
-  labs(x = "Value", 
-       y = "Behavior\nReduces Time to Crisis End                          <------------------------------------------------------->                          Increases Time to Crisis End", 
-       fill = "Δ Predicted\nSteps Remaining") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(x="Observed Recently <---------------------------------------------------------------------------------------> Observed Earlier\nNumber of Time Steps Since Behavior Observed",
-       title="Predicted Change in Time Until End of Crisis",
-       subtitle="Subset to behaviors with total time discounted contribution > 0.05\nBehaviors: Thoughts (orange); Speech (blue); Escalatory Actions (red); De-escalatory Actions (green); Action Details (Purple)")+ 
-  theme(axis.text.y = element_text( colour = temp2$color_category) )
-    
-```
-
-```{r Cuban Missiles, eval=T,output=F}
-
-temp1 <- shap_values_df_long %>% filter(crisno==196) %>% filter(shap!=0) %>% filter(!feature %in% c('intercept','crisis_block'))  %>% 
-  mutate(t=sentence_number %>% as.factor() %>% as.integer()) %>% 
-  mutate(feature_clean = feature %>% str_replace(".*__","")) %>%
-  filter(value %in% 0) %>% arrange(t, desc(abs(shap))) %>%
-  group_by(t) %>%
-  filter(row_number()==1)
-
-temp2 <- predictions_oos %>% filter(crisno==196) %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>%
-  mutate(t=row_number()) 
-
-temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))
-
-p1 <- temp3 %>% 
-  ggplot() + 
-  geom_point(aes(x=t, y=Y_hat)) + 
-  geom_line(aes(x=t, y=Y_hat)) + 
-  geom_text(aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
-  ylim(3,13) +
-  scale_color_gradient2("Δ Predicted\nEvents Remaining",low = "darkblue", high = "red", mid = "grey", 
-                       midpoint = 0, limit = c(min(temp3$shap), max(temp3$shap) )) + #max(temp3$shap)
-  theme_bw() +
-  labs(title="Cuban Missile Crisis (1962)") +
-  ylab("Predicted Events Remaining") +
-  xlab("Events so Far (t)")
-
-
-```
-
-```{r Crimea, eval=T,output=F}
-
-temp1 <- shap_values_df_long %>% filter(crisno==471) %>% filter(shap!=0) %>% filter(!feature %in% c('intercept','crisis_block')) %>% 
-  mutate(t=sentence_number %>% as.factor() %>% as.integer()) %>% 
-  mutate(feature_clean = feature %>% str_replace(".*__","")) %>%
-  filter(value %in% 0) %>% arrange(t, desc(abs(shap))) %>%
-  group_by(t) %>%
-  filter(row_number()==1)
-
-temp2 <- predictions_oos %>% filter(crisno==471) %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>%
-  mutate(t=row_number()) 
-
-temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))
-
-p2 <- temp3 %>% 
-  ggplot(aes(x=t, y=Y_hat)) + 
-  geom_point() + 
-  geom_line() + 
-  geom_text(data=temp3, aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
-  ylim(7,17) +
-  scale_color_gradient2("Δ Predicted\nEvents Remaining",low = "blue", high = "red", mid = "grey", 
-                       midpoint = 0, limit = c(min(temp3$shap), max(temp3$shap))) +
-  theme_bw() +
-  labs(title="Crimea-Donbas (2014)") +
-  ylab("Predicted Events Remaining") +
-  xlab("Events so Far (t)")
-
-```
-
-```{r Gulf War, eval=T,output=F}
-
-temp1 <- shap_values_df_long %>% filter(crisno==393) %>% filter(shap!=0)  %>% filter(!feature %in% c('intercept','crisis_block'))  %>% 
-  mutate(t=sentence_number %>% as.factor() %>% as.integer()) %>% 
-  mutate(feature_clean = feature %>% str_replace(".*__","")) %>%
-  filter(value %in% 0) %>% arrange(t, desc(abs(shap))) %>%
-  group_by(t) %>%
-  filter(row_number()==1)
-
-temp2 <- predictions_oos %>% filter(crisno==393) %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>%
-  mutate(t=row_number()) 
-
-temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))
-
-p3 <- temp3 %>% 
-  ggplot(aes(x=t, y=Y_hat)) + 
-  geom_point() + 
-  geom_line() + 
-  geom_text(data=temp3, aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
-  ylim(4,14) +
-  scale_color_gradient2("Δ Predicted\nEvents Remaining",low = "blue", high = "red", mid = "grey", 
-                       midpoint = 0, limit = c(min(temp3$shap), max(temp3$shap))) +
-  theme_bw() +
-  labs(title="GULF WAR (1990)") +
-  ylab("Predicted Events Remaining") +
-  xlab("Events so Far (t)")
-
-
-```
-
-```{r, eval=T, fig.width=14, fig.height=12, output=T}
-# Load the necessary library
-
-library(cowplot)
-
-# Assuming you have three ggplot objects named plot1, plot2, plot3
-combined_plot <- plot_grid(p1, p3, p2,
-                           align = 'v', # Aligns vertically
-                           nrow = 3,    # Number of rows
-                           rel_heights = c(1, 1, 1)) # Relative heights of each row
-
-# To display the combined plot
-print(combined_plot)
-
-# If you want to save the combined plot to a file
-#ggsave("combined_plot.png", combined_plot, width = 10, height = 30, dpi = 300)
-```
-
-```{r, eval=T, fig.width=7, fig.height=6, output=F}
-
-temp1 <- predictions_oos %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>% group_by(crisno) %>% mutate(t=row_number()) %>% ungroup()
-
-temp1_wide <- temp1 %>% dplyr::select(crisno, t, Y_hat) %>%pivot_wider( 
-                       names_from = t, 
-                       values_from = Y_hat,
-                       names_prefix = "t")
-
-df_without_crisno <- temp1_wide[, -1]
-
-na_euclidean <- function(x, y) {
-  valid <- !is.na(x) & !is.na(y)
-  sqrt(sum((x[valid] - y[valid])^2))
-}
-n <- nrow(df_without_crisno)
-
-# Initialize a matrix to store distances
-distance_matrix <- matrix(NA, n, n)
-
-if(FALSE){
-  for (i in 1:(n-1)) {
-    print(i)
-    for (j in (i+1):n) {
-      distance_matrix[i, j] <- na_euclidean(df_without_crisno[i, ], df_without_crisno[j, ])
-      distance_matrix[j, i] <- distance_matrix[i, j]  # The matrix is symmetric
-    }
-  }
-  
-  distance_matrix %>% saveRDS("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_out/distance_matrix.Rds")
-}
-
-distance_matrix <- readRDS("/media/skynet3/8tb_a/rwd_github_private/ICBeLLM/data_out/distance_matrix.Rds")
-
-# View the distance matrix
-distance_matrix_clean <- distance_matrix
-distance_matrix_clean[is.na(distance_matrix_clean)] <- 0
-d_distance_matrix_clean <- dist(distance_matrix_clean)
-
-hc <- hclust(d_distance_matrix_clean, method="ward.D2")
-plot(hc)
-colors_df <- temp1_wide[, 1]
-colors_df$cluster <- cutree(hc,k=6) %>% as.factor()
-
-p4 <- temp1 %>% left_join(colors_df) %>%
-      ggplot(aes(x=t, y=Y_hat, group=crisno, color=cluster)) + 
-      #geom_point() + 
-      geom_line(alpha=0.1) + 
-      geom_smooth(aes(x=t, y=Y_hat, group=cluster, color=cluster), se=F, span=0.01) +
-      #geom_text(data=temp3, aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
-      #ylim(5,17) +
-      #scale_color_gradient2("Δ Predicted\nEvents Remaining",low = "blue", high = "red", mid = "grey", 
-      #                     midpoint = 0, limit = c(min(temp3$shap), max(temp3$shap))) +
-      theme_bw() +
-      labs(title="Distribution of Predicted Crisis Paths") +
-      ylab("Predicted Events Remaining") +
-      xlab("Events so Far (t)")
-p4
-
-library(dendextend)
-library(ggplot2)
-library(gridExtra)
-library(grid)
-library(ggdendro)
-dend <- as.dendrogram(hc)
-
-# Color the branches by the clusters
-dend <- color_branches(dend, k = 6) #, col = colors_df$cluster
-ggd1 <- as.ggdend(dend)
-library(ggplot2)
-# the nodes are not implemented yet.
-pd <- ggplot(ggd1) 
-
-overlay_plot <- cowplot::ggdraw() +
-  cowplot::draw_plot(p4) +
-  cowplot::draw_plot(pd, x = 0.6, y = 0.6, width = 0.3, height = 0.3)
-
-# Draw the combined plot
-#plot(overlay_plot)
-
-
-```
-
-```{r, eval=T, fig.width=10, fig.height=6, output=T}
-plot(overlay_plot)
-```
