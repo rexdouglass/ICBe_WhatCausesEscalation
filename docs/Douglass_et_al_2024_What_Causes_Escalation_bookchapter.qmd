@@ -560,17 +560,19 @@ p_Figure1 <- temp %>%
   geom_point(aes(x=sentence_number_mean,y=variable, color=color_category), size=1.0) +
   #facet_wrap(facets=~color_category,ncol=1, scales="free_y", strip.position = "right")
   facet_grid(rows = vars(category), scales = "free_y", space = "free_y")  +  # Adds error bars
+  theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotates x-axis labels for readability
+  theme(text = element_text(family = "Courier")) + # Monospaced font
   labs(y = "Behavior", 
        x = "Early <------------------------------------------------------------> Late\nMean Relative Location in Crisis Narrative", 
        title = "When Behaviors Tend to Happen within a Crisis",
        subtitle="Mean Location within Narrative Grouped by Behavior Type") +
   #coord_flip()  +
-  scale_color_identity() +
-  theme_bw()
+  scale_color_identity() 
+
   #theme(axis.text.y = element_text( colour = temp$color_category ) )  #angle = 0, hjust = 0,
 
-ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure1_Behavior_Locations.png", plot = p_Figure1, width = 10, height = 14)
+ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure1_Behavior_Locations.png", plot = p_Figure1, width = 8.5, height = 11, bg="white")
 
 
 ```
@@ -865,9 +867,83 @@ p_Figure2 <- temp1 %>%
        subtitle="Subset to behaviors with total time discounted contribution > 0.05\nBehaviors: Thoughts (orange); Speech (blue); Escalatory Actions (red); De-escalatory Actions (green); Action Details (Purple)")+ 
   theme(axis.text.y = element_text( colour = temp2$color_category) )
 
+
+
+library(ggplot2)
+library(dplyr)
+
+# Function to assign symbols based on the value of 'shap'
+assign_symbol <- function(shap) {
+  if (shap > 0) {
+    return("◤")
+  } else if (shap < 0) {
+    return("◢")
+  } else {
+    return(" ")
+  }
+}
+
+# Function to assign grayscale based on the value of 'shap'
+assign_gray_scale <- function(shap, min_shap, max_shap) {
+  # Normalize 'shap' to a scale of 0 to 1
+  normalized_shap <- (shap - min_shap) / (max_shap - min_shap)
+  # Convert to grayscale
+  grayscale_value <- 255 - (normalized_shap * 255)
+  return(grayscale_value)
+}
+
+# Apply the functions to the dataframe
+temp1 <- temp1 %>%
+  mutate(symbol = sapply(shap, assign_symbol),
+         grayscale = sapply(shap, assign_gray_scale, min(temp1$shap), max(temp1$shap)))
+
+# Plotting (this is a conceptual example and might need adjustments)
+p_Figure2_bw <- 
+  temp1 %>%
+  mutate(category = "Error") %>%
+  mutate(category = ifelse(color_category %in% "red","Escalatory/Uncooperative",category)) %>%
+  mutate(category = ifelse(color_category %in% "forestgreen","De-escalatory/Cooperative",category)) %>%
+  mutate(category = ifelse(color_category %in% "blue","Speech",category)) %>%
+  mutate(category = ifelse(color_category %in% "darkorange","Thought",category)) %>%
+  mutate(category = ifelse(color_category %in% "purple","Details",category)) %>%
+  ggplot( aes(x = factor(value), y = feature)) +
+  geom_text(aes(label = symbol, color = shap), size=3) +
+  #scale_color_gradient(low = "white", high = "black") +
+  scale_color_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(min(temp1$shap), max(temp1$shap))) +
+  theme_bw() +
+  theme(text = element_text(family = "Courier")) + # Monospaced font
+  # Additional theming and labelling as per your original plot
+    theme(
+      #axis.text.y = element_text(colour = temp2$color_category),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()
+        ) +
+  labs(x = "Value", 
+       y = "Behavior\nShorter Time to Crisis End  <--------------------------------------------------> Longer Time to Crisis End", 
+       color = "Steps\nRemaining") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x="Observed Recently <-------------------------> Observed Earlier\nNumber of Time Steps Since Behavior Observed",
+       title="Predicted Change in Time Until End of Crisis",
+       #subtitle="Subset to behaviors with total time discounted contribution > 0.05\nBehaviors: Thoughts (orange); Speech (blue); Escalatory Actions (red); De-escalatory Actions (green); Action Details (Purple)"
+       ) + 
+#  theme(
+#  legend.position = c(0.95, 0.5),  # Adjust these values as needed
+#  legend.justification = c(1, 0.5),
+#  legend.box.just = "right",
+#  legend.margin = margin(),
+#  legend.box.margin = margin(),
+#  legend.background = element_blank()
+#) +  
+  facet_grid(rows = vars(category), scales = "free_y", space = "free_y")    # Adds error bars
+
+
 ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure2_LightGBM_Results.png", plot = p_Figure2, width = 10, height = 14)
 
-    
+ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure2_LightGBM_Results_bw.png", plot = p_Figure2_bw, width = 8.5, height = 11, bg="white")
+
 ```
 
 
@@ -966,11 +1042,15 @@ p3 <- temp3 %>%
 library(cowplot)
 
 # Assuming you have three ggplot objects named plot1, plot2, plot3
-p_Figure3 <- plot_grid(p1, p3, p2,
+p_Figure3 <- plot_grid(p1 + theme(text = element_text(family = "Courier")), 
+                       p3 + theme(text = element_text(family = "Courier")),
+                       p2 + theme(text = element_text(family = "Courier")),
                            align = 'v', # Aligns vertically
                            nrow = 3,    # Number of rows
-                           rel_heights = c(1, 1, 1)) # Relative heights of each row
-
+                           rel_heights = c(1, 1, 1)) + # Relative heights of each row
+  theme_bw() +
+  theme(text = element_text(family = "Courier")) #+ # Monospaced font
+  
 # To display the combined plot
 # If you want to save the combined plot to a file
 #ggsave("combined_plot.png", combined_plot, width = 10, height = 30, dpi = 300)
@@ -1056,8 +1136,10 @@ library(ggplot2)
 pd <- ggplot(ggd1) 
 
 p_Figure4 <- cowplot::ggdraw() +
-  cowplot::draw_plot(p4) +
-  cowplot::draw_plot(pd, x = 0.6, y = 0.6, width = 0.3, height = 0.3)
+  cowplot::draw_plot(p4 + theme(text = element_text(family = "Courier")) ) +
+  cowplot::draw_plot(pd, x = 0.6, y = 0.6, width = 0.3, height = 0.3) +
+  theme_bw() +
+  theme(text = element_text(family = "Courier")) 
 
 ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.png", plot = p_Figure4, width = 10, height = 6)
 
@@ -1259,7 +1341,7 @@ ft %>% set_table_properties(opts_pdf=list(fonts_ignore=T)) %>% save_as_image( pa
 
 ```
 
-![](Table1.png)
+<-Insert Table 1 Here->
 
 ## Defining Escalation/De-escalation
 
@@ -1313,11 +1395,9 @@ Our ultimate goal is to be able to give policy decision-makers evidence-based re
 
 To illustrate the idea, we begin first with a simple descriptive exercise arranging the types of behaviors we observe empirically in crises by when (i.e. the time point) that they tend to occur within a crisis. Our unit of analysis is the crisis-sentence-behavior. We calculate each behavior’s relative position within a crisis by counting the number of behaviors occurring before it and dividing this number by the total number of events, $Y∈[0,1]$. The mean location within narratives across the entire corpus is shown in Figure 1 below.
 
-<!-- \< FIGURE 1 about here \>  -->
+< FIGURE 1 about here >
 
-```{r, eval=T, fig.width=12, fig.height=16, output=T}
-p_Figure1
-```
+
 
 We find that behaviors align in time in a way that largely mirrors our prior beliefs about what constitutes escalatory/non-cooperative versus de-escalatory/cooperative behaviors. The ICBe ontology explicitly binned actions into escalator/non-cooperative (red)—which we find here appear earlier in crises—and de-escalatory/cooperative (green)—which we find appear later in crises. The two groups are so strongly correlated with time within crises that they are nearly linearly separable. Thought behaviors were not pre-divided into types, but they similarly align over time with motivations for conflict appearing early (start of crisis, territory aims, regime change aims, preemptive aims, discovering or becoming convinced of a fact, etc.) and thoughts ending late (perceptions of defeat, perception of end of a crisis). Likewise, speech acts that appear early on in crises include accusations, demands, ultimatums, and threats, while speech acts that tend to be associated with the ending of crises include promises, offers, and acceptances. The details of actions tend to appear earlier in crises, e.g. how many troops, while the consequences, e.g. changes in territory, tend to come toward the end.
 
@@ -1335,12 +1415,7 @@ Our estimand is the degree to which previous behaviors lengthen or shorten a cri
 
 The results are shown in Figure 2 below. The outcome is predicted time until the end of the crisis (defined as no more events coded from the narrative). Along the Y-axis each row lists the behaviors with the greatest contribution to the model’s predictions. Along the X-axis, each column lists the number of time steps in the past that behavior was last observed, with 0 being concurrently to a given time $t$. The cells are shaded with the observed SHAP value for that behavior last observed that many time steps ago, with bright red reflecting a strong increase in the expected number of steps until the end of the crisis and deep blue representing a strong expected decrease in the number of steps until the end of a crisis. Behaviors are arranged in descending order, from the largest expected increase in time until crisis end to the largest expected decrease (sum each row’s total SHAP contribution, dividing each cell’s value by the time since it was observed to place greater weight on more recent acts).
 
-<!-- \< FIGURE 2 about here \> -->
-
-```{r, eval=T, fig.width=12, fig.height=14, output=T}
-p_Figure2
-```
-
+< FIGURE 2 about here >
 
 We start by describing the easiest-to-understand behavior, “end of crisis,” which is something that was explicitly mentioned in each crisis narrative and coded by ICBe as a thought behavior. Once the narrative mentions that one of the actors has decided that the crisis has ended, the model expects the whole narrative to wrap up shortly and stop producing coded events. The effect also grows stronger in time; the longer in the past that an end to the crisis is mentioned, the more likely it is that the narrative really will be wrapping up soon, until at some point the sign flips and it becomes more likely that the crisis ended for only a subset of actors and the rest continued on their own path. On the opposite end of the spectrum, forming a military alliance is most indicative that the crisis is going to extend longer and as before the strength is greatest the more recent the behavior was observed.
 
@@ -1360,11 +1435,9 @@ From the perspective of the debate between deterrence and the spiral model, thes
 
 In this section, we detail three case study examples that help to illustrate how behaviors impact expectations over the course of a crisis. Additional details of each case are depicted in Figure 3. The Y-axis in Figure 3 reports the predicted number of steps estimated to remain in the crisis. The X-axis details the step T in the crisis (note that the length of each crisis differs). We annotate each point with the behavior that most strongly contributed to a given prediction (colored by the strength and direction of that particular contribution).
 
-<!-- \< FIGURE 3 about here \> -->
+< FIGURE 3 about here >
 
-```{r, eval=T, fig.width=14, fig.height=12, output=T}
-print(p_Figure3)
-```
+
 
 For example, at the first time-step of the Cuban Missile Crisis, the model estimates that there are likely to be 10 more steps, which is driven primarily by the global average and partly by the only information seen so far in the behaviors of just that first step. The behavior in that first step that most contributed to the prediction was that the United States discovered a fact, leading the model to increase the expected length of the crisis. The next step contained little information keeping the number of expected steps at 10 despite advancing 1. In the third step, the model lowers its expected length because of a rejection combined with the mobilization last observed only 2 steps prior. In this way, the model proceeds downward and to the right, updating its expectation given the full history observed thus far. A series of back-to-back promising signs, colored in blue, reduce the predicted length of the crisis (e.g. withdraw from an area, mediation, mediation, withdraw), until the shootdown of the U-2 spy plane which sparks an increase in the expected length of the conflict. It does not begin to decline again until the signing a formal agreement, a withdrawl from an area, and then an explicit end of crisis craters the expectation to only 4 steps remaining. At some steps, the behaviors of the top feature provide no clear signal, with small SHAP values (gray color).
 
@@ -1373,15 +1446,9 @@ The three example cases vary in their overall temporal signature. The Cuban Miss
 To see how representative these temporal trends are we next cluster the predicted number of remaining steps at each time point for every crises, shown in Figure 4 below. We find several general patterns similar to the case studies above, across 6 clusters: crises that resolve almost immediately, crises that begin to resolve but then revert to a high unsatisfying level of hostility, crises that stair step down in escalation, and finally crises that stair step upward over time. We interpret this as evidence of intermittent rounds of fighting and bargaining within crises. This demonstrates the importance of scale in measurement. Some of these crises have episodes and breaks within them. Earlier we noted that beyond a certain scale of conflict, events are likely broken down across separate crises over years. How we interpret the consequences of a particular behavior turns on our beliefs about the importance of the short-, medium-, and long-term consequences of a statement, action, or outcome. Future work will need to pay close attention to the endogenous nature of how combatants define the start and end of a crisis, and how social scientists in turn choose to group events and periods into large constructs when conducting their analyses.
 
 
-<!-- \< FIGURE 4 about here \> -->
-
-<!-- ![Figure 4](/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.pdf){width=100%}
-<img src="/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.png" style="width: 100%; height: auto;">  -->
+< FIGURE 4 about here >
 
 
-```{r, eval=T, fig.width=10, fig.height=6, output=T}
-plot(p_Figure4) #Plot figure 4 here
-```
 
 # Discussion
 
@@ -1595,3 +1662,29 @@ Zagare, Frank C. and D. Marc Kilgour. 2000. *Perfect Deterrence*. Cambridge, UK:
 Zagare, Frank C. and D. Marc Kilgour. 1998. “Deterrence Theory and the Spiral Model Revisited.” *Journal of Theoretical Politics* 10(1):59—87.
 
 
+{{< pagebreak >}}
+Table 1
+![](Table1.png)
+{{< pagebreak >}}
+Figure 1
+```{r, eval=T, fig.width=8.5, fig.height=12, output=T}
+p_Figure1
+```
+
+{{< pagebreak >}}
+Figure 2
+```{r, eval=T, fig.width=8.5, fig.height=12, output=T}
+p_Figure2_bw
+```
+
+{{< pagebreak >}}
+Figure 3
+```{r, eval=T, fig.width=14, fig.height=12, output=T}
+print(p_Figure3)
+```
+
+{{< pagebreak >}}
+Figure 4
+```{r, eval=T, fig.width=12, fig.height=8.5, output=T}
+plot(p_Figure4) #Plot figure 4 here
+```
