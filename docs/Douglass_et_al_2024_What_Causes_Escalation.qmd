@@ -575,9 +575,6 @@ ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/F
 
 ```
 
-
-
-
 ```{r, eval=F, fig.width=12, fig.height=14, output=T}
 
 library(ggplot2)
@@ -870,7 +867,6 @@ ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/F
     
 ```
 
-
 ```{r Cuban Missiles, eval=T,output=F}
 
 temp1 <- shap_values_df_long %>% filter(crisno==196) %>% filter(shap!=0) %>% filter(!feature %in% c('intercept','crisis_block'))  %>% 
@@ -980,8 +976,6 @@ ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/F
 
 ```
 
-
-
 ```{r, eval=T, fig.width=7, fig.height=6, output=F}
 
 temp1 <- predictions_oos %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>% group_by(crisno) %>% mutate(t=row_number()) %>% ungroup()
@@ -1069,7 +1063,9 @@ ggsave("/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/F
 
 # Introduction
 
-What does it mean that an international crisis is escalating, and what actions within a crisis are escalatory? This question haunts recent and ongoing crises such as missile tests on the Korean Peninsula, Russian incursions in Ukraine, partial state death in Syria, and Chinese claims of sovereignty in the South and East China Seas. In these situations, leaders face a shared fundamental question about how to navigate a dangerous situation without accidentally sliding over the line into a larger-than-desired conflict (Snyder and Diesing 1977; Slantchev 2005). Often leaders must make decisions with limited time and inadequate information (Jervis 1976, p. 95). What guidance can we offer to help maintain peace and stability? Can we predict how states will react to specific events during crises? Can we recommend policies or actions that are most likely to lead to success without being destabilizing? In short, what empirical evidence can we bring to bear on the practical questions of crisis management?^[See Gannon (2022) for a recent review in the context of cross-domain deterrence and escalation.]
+What does it mean that an international crisis is escalating, and what actions within a crisis are escalatory? This question haunts recent and ongoing crises such as missile tests on the Korean Peninsula, Russian incursions in Ukraine, partial state death in Syria, and Chinese claims of sovereignty in the South and East China Seas. In these situations, leaders face a shared fundamental question about how to navigate a dangerous situation without accidentally sliding over the line into a larger-than-desired conflict (Snyder and Diesing 1977; Slantchev 2005). Often leaders must make decisions with limited time and inadequate information (Jervis 1976, p. 95). What guidance can we offer to help maintain peace and stability? Can we predict how states will react to specific events during crises? Can we recommend policies or actions that are most likely to lead to success without being destabilizing? In short, what empirical evidence can we bring to bear on the practical questions of crisis management?[^1]
+
+[^1]: See Gannon (2022) for a recent review in the context of cross-domain deterrence and escalation.
 
 The international relations field offers two foundational perspectives on crisis dynamics, classically described by Robert Jervis (1976) as the deterrence model and the spiral model. The former blames escalation on the failure to credibly communicate threats (Rovner 2020) or misperceptions about capability or resolve (Morrow 2019). The latter views escalation as a retaliation to provocation where a tit-for-tat response fails to end the crisis (O’Neill 1991). These models offer contradictory policy prescriptions: on one hand, policymakers should use bold words and actions to discourage aggression; on the other, they should mitigate security dilemmas through compromise and accommodation. Historical studies typically provide more nuance, but the additional context needed to make sense of specific crises just highlights the fact that both models are underspecified. Neither model, moreover, is well integrated with more recent thinking about the underlying bargaining dynamics of military contests (Fearon 1995). Previous empirical research designed to validate or reject competing theoretical explanations for escalation has faced daunting challenges given that the basis for comparison and/or the logical discrepancies between alternative theories have not been resolved (Glaser 1992; Kydd 1997; Zagare and Kilgour 1998) and the ability to empirically assess such efforts is complicated by the structural indeterminacy of uncertainty (Gartzke 1999; Chen, et al. 2022). These efforts have yet to establish a consensus pecking order between canonical alternatives (c.f., Wright 1965; Carlson 1995; Kinsella and Russett 2002).
 
@@ -1329,9 +1325,9 @@ We want to predict the time it will take to resolve a crisis as a function of th
 
 Our cross-validation strategy takes into account the nested-panel structure of our data. We divide the $C=475$ crises into 10 test folds. For each test fold ($c=48$), we fit a model dividing the remaining crises, $c=427$, into a training set of crises, $c=405$, and a validation data set, $c=23$. The same crisis will therefore never appear in both training and test, or training and validation, etc. Because we fit 10 different models predicting out-of-sample for each of the 10 test folds, we are able to present results below that cover the entire dataset and are based only on out of sample predictions.
 
-We employ a gradient-boosted trees estimator, specifically LightGBM (Ke, et al. 2017). We choose this estimator because of its speed, flexibility, and predictive performance. It is nonparametric, allowing us to easily distinguish differential effects of a behavior happening recently from long ago, and to automatically search for interactions among behavior types. We optimize an L1 regression loss, mean absolute error, rather than mean squared error, which is less sensitive to outlier very long crisis narratives, and empirically had better out-of-sample performance. 
+We employ a gradient-boosted trees estimator, specifically LightGBM (Ke, et al. 2017). We choose this estimator because of its speed, flexibility, and predictive performance. It is nonparametric, allowing us to easily distinguish differential effects of a behavior happening recently from long ago, and to automatically search for interactions among behavior types. We optimize an L1 regression loss, mean absolute error, rather than mean squared error, which is less sensitive to outlier very long crisis narratives, and empirically had better out-of-sample performance.
 
-Our estimand is the degree to which previous behaviors lengthen or shorten a crisis, the degree to which a behavior is escalatory, the weights $\beta$ introduced earlier. We approximate that estimand using the out of sample feature contributions of each behavior - time since observed. Our measure of feature contributions is SHAP values which is a local approximate decomposition of each feature’s contribution to the final prediction produced by the full black box model. 
+Our estimand is the degree to which previous behaviors lengthen or shorten a crisis, the degree to which a behavior is escalatory, the weights $\beta$ introduced earlier. We approximate that estimand using the out of sample feature contributions of each behavior - time since observed. Our measure of feature contributions is SHAP values which is a local approximate decomposition of each feature’s contribution to the final prediction produced by the full black box model.
 
 The results are shown in Figure 2 below. The outcome is predicted time until the end of the crisis (defined as no more events coded from the narrative). Along the Y-axis each row lists the behaviors with the greatest contribution to the model’s predictions. Along the X-axis, each column lists the number of time steps in the past that behavior was last observed, with 0 being concurrently to a given time $t$. The cells are shaded with the observed SHAP value for that behavior last observed that many time steps ago, with bright red reflecting a strong increase in the expected number of steps until the end of the crisis and deep blue representing a strong expected decrease in the number of steps until the end of a crisis. Behaviors are arranged in descending order, from the largest expected increase in time until crisis end to the largest expected decrease (sum each row’s total SHAP contribution, dividing each cell’s value by the time since it was observed to place greater weight on more recent acts).
 
@@ -1341,16 +1337,15 @@ The results are shown in Figure 2 below. The outcome is predicted time until the
 p_Figure2
 ```
 
-
 We start by describing the easiest-to-understand behavior, “end of crisis,” which is something that was explicitly mentioned in each crisis narrative and coded by ICBe as a thought behavior. Once the narrative mentions that one of the actors has decided that the crisis has ended, the model expects the whole narrative to wrap up shortly and stop producing coded events. The effect also grows stronger in time; the longer in the past that an end to the crisis is mentioned, the more likely it is that the narrative really will be wrapping up soon, until at some point the sign flips and it becomes more likely that the crisis ended for only a subset of actors and the rest continued on their own path. On the opposite end of the spectrum, forming a military alliance is most indicative that the crisis is going to extend longer and as before the strength is greatest the more recent the behavior was observed.
 
 Zooming out, several general trends are immediately apparent. First, there was a strong signal for only some behaviors with many having little or no contribution to the model’s predictions (we show 123 of 140 here). This is a function of the actual data-generating process (some behaviors are orthogonal or redundant to crisis duration), to measurement (some behaviors are measured or reported more noisily than others), and to the sample size (a larger corpus would likely tease out the role of more behaviors). Second, the effect of a behavior generally decays in time, with more recent events being more informative than those that are more distant in time. Third, there is variation in the degree of decay across behaviors. Figure 2 depicts a triangle-shaped surface, with behaviors toward the middle still being informative but only if they have occurred relatively recently (the shape is an intentional artifact of the ordering).
 
 Moving to a substantive interpretation, the types of behaviors that extend versus those that reduce the length of a crisis lend support to some theories of international relations more than others. We find the biggest winners to be bargaining models of war (Fearon 1995; Wagner 2000, 2007) that see large violent shocks as stability-inducing because they provide information to both sides about who is likely to win should the contest continue (Shirkey 2016, Weisinger 2013). Behaviors that indicate a crisis is coming to an end include a perception of victory or defeat, a surrender or withdrawal from an area or a retreat, a large gain in territory, and to a lesser degree even battles/clashes and attacks. Meanwhile behaviors that indicate a lengthening of the crisis are large changes in the international system that might increase uncertainty, like the formation of a new military alliance (Benson 2012; Benson and Smith 2022), a political succession, a declaration of war, a third party entering a way (Shirkey 2012), or a change in institutions change.
 
-In terms of diplomacy, aggressive speech that might signal resolve like making an ultimatum or breaking off negotiations, are more likely followed longer crisis periods. Meanwhile engaging in mediation, making an offer without conditions, even expressing disapproval, rejection, or acceptance, all indicate the crisis is shifting to speech and away from actions and likely to end sooner.[^3] Mentions of grievances and specific topics are also indicators of more time until resolution, such as threats or accusations, fears or desires, territorial or policy aims, becoming convinced of a policy fact, human rights violations, etc.
+In terms of diplomacy, aggressive speech that might signal resolve like making an ultimatum or breaking off negotiations, are more likely followed longer crisis periods. Meanwhile engaging in mediation, making an offer without conditions, even expressing disapproval, rejection, or acceptance, all indicate the crisis is shifting to speech and away from actions and likely to end sooner.[^2] Mentions of grievances and specific topics are also indicators of more time until resolution, such as threats or accusations, fears or desires, territorial or policy aims, becoming convinced of a policy fact, human rights violations, etc.
 
-[^3]: These could be associated with the end of a crisis because the structure of the narratives describes mediation efforts at the conclusion of the crisis summary. Later analyses could identify the time period when mediation efforts occurred relative to the observed end of the crisis to see if different patterns emerge.
+[^2]: These could be associated with the end of a crisis because the structure of the narratives describes mediation efforts at the conclusion of the crisis summary. Later analyses could identify the time period when mediation efforts occurred relative to the observed end of the crisis to see if different patterns emerge.
 
 We stress that this is a purely observational research design that cannot distinguish causes of crisis resolution from coincident indicators of a crisis winding down. For example, mediation may not actually cause a crisis to end. Rather, mediation may be associated with the end of a conflict process that’s already begun to terminate for other reasons. That said, we do find unexpected correlates in behaviors we considered escalatory/un-cooperative being associated with a crisis ending sooner and others that we have considered de-escalatory/cooperative being associated with a crisis persisting for longer periods of time. In particular, the ones that flipped appear to be consistent with a bargaining model view of international conflict, with cooperative acts that signal major realignments—and thus create additional uncertainty—extending crises, while escalator/uncooperative acts that kill and destroy but provide information being more often associated with bringing a crisis to a close.
 
@@ -1372,13 +1367,12 @@ The three example cases vary in their overall temporal signature. The Cuban Miss
 
 To see how representative these temporal trends are we next cluster the predicted number of remaining steps at each time point for every crises, shown in Figure 4 below. We find several general patterns similar to the case studies above, across 6 clusters: crises that resolve almost immediately, crises that begin to resolve but then revert to a high unsatisfying level of hostility, crises that stair step down in escalation, and finally crises that stair step upward over time. We interpret this as evidence of intermittent rounds of fighting and bargaining within crises. This demonstrates the importance of scale in measurement. Some of these crises have episodes and breaks within them. Earlier we noted that beyond a certain scale of conflict, events are likely broken down across separate crises over years. How we interpret the consequences of a particular behavior turns on our beliefs about the importance of the short-, medium-, and long-term consequences of a statement, action, or outcome. Future work will need to pay close attention to the endogenous nature of how combatants define the start and end of a crisis, and how social scientists in turn choose to group events and periods into large constructs when conducting their analyses.
 
-
 <!-- \< FIGURE 4 about here \> -->
 
+```{=html}
 <!-- ![Figure 4](/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.pdf){width=100%}
 <img src="/media/skynet3/8tb_a/rwd_github_private/ICBe_WhatCausesEscalation/docs/Figure4_DistributionOfHistories.png" style="width: 100%; height: auto;">  -->
-
-
+```
 ```{r, eval=T, fig.width=10, fig.height=6, output=T}
 plot(p_Figure4) #Plot figure 4 here
 ```
@@ -1593,5 +1587,3 @@ Wohlsletter, Albert. 1959. “The Delicate Balance of Terror.” *Foreign Affair
 Zagare, Frank C. and D. Marc Kilgour. 2000. *Perfect Deterrence*. Cambridge, UK:  Cambridge University Press.
 
 Zagare, Frank C. and D. Marc Kilgour. 1998. “Deterrence Theory and the Spiral Model Revisited.” *Journal of Theoretical Politics* 10(1):59—87.
-
-
