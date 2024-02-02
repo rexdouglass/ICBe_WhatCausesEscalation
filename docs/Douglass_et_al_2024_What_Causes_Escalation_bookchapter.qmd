@@ -959,7 +959,8 @@ temp1 <- shap_values_df_long %>% filter(crisno==196) %>% filter(shap!=0) %>% fil
 temp2 <- predictions_oos %>% filter(crisno==196) %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>%
   mutate(t=row_number()) 
 
-temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))
+temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap)) %>%
+         mutate(feature_clean = paste0(feature_clean, " (", ifelse(shap>0,"+",""),shap %>% round(1), ")" ) )
 
 p1 <- temp3 %>% 
   ggplot() + 
@@ -989,14 +990,15 @@ temp1 <- shap_values_df_long %>% filter(crisno==471) %>% filter(shap!=0) %>% fil
 temp2 <- predictions_oos %>% filter(crisno==471) %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>%
   mutate(t=row_number()) 
 
-temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))
+temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))  %>%
+         mutate(feature_clean = paste0(feature_clean, " (", ifelse(shap>0,"+",""),shap %>% round(1), ")" ) )
 
 p2 <- temp3 %>% 
   ggplot(aes(x=t, y=Y_hat)) + 
   geom_point() + 
   geom_line() + 
   geom_text(data=temp3, aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
-  ylim(7,17) +
+  ylim(7,20) +
   scale_color_gradient2("Change in Predicted\nEvents Remaining",low = "blue", high = "red", mid = "grey", 
                        midpoint = 0, limit = c(min(temp3$shap), max(temp3$shap))) +
   theme_bw() +
@@ -1018,14 +1020,15 @@ temp1 <- shap_values_df_long %>% filter(crisno==393) %>% filter(shap!=0)  %>% fi
 temp2 <- predictions_oos %>% filter(crisno==393) %>% dplyr::select(crisno , sentence_number, Y, Y_hat) %>%
   mutate(t=row_number()) 
 
-temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))
+temp3 <- temp2 %>% left_join(temp1 %>% dplyr::select(crisno, t, feature_clean, shap))  %>%
+         mutate(feature_clean = paste0(feature_clean, " (", ifelse(shap>0,"+",""),shap %>% round(1), ")" ) )
 
 p3 <- temp3 %>% 
   ggplot(aes(x=t, y=Y_hat)) + 
   geom_point() + 
   geom_line() + 
   geom_text(data=temp3, aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
-  ylim(4,14) +
+  ylim(4,15) +
   scale_color_gradient2("Change in Predicted\nEvents Remaining",low = "blue", high = "red", mid = "grey", 
                        midpoint = 0, limit = c(min(temp3$shap), max(temp3$shap))) +
   theme_bw() +
@@ -1109,7 +1112,7 @@ colors_df$cluster <- cutree(hc,k=6) %>% as.factor()
 p4 <- temp1 %>% left_join(colors_df) %>%
       ggplot(aes(x=t, y=Y_hat, group=crisno, color=cluster, linetype=cluster)) + 
       #geom_point() + 
-      geom_line(alpha=0.1) + 
+      #geom_line(alpha=0.1) + 
       geom_smooth(aes(x=t, y=Y_hat, group=cluster, color=cluster), se=F, span=0.01) +
       #geom_text(data=temp3, aes(x=t,y=Y_hat,label=feature_clean, color=shap), angle=45, hjust=0, vjust=-1) +
       #ylim(5,17) +
@@ -1663,28 +1666,30 @@ Zagare, Frank C. and D. Marc Kilgour. 1998. “Deterrence Theory and the Spiral 
 
 
 {{< pagebreak >}}
-Table 1
+
 ![](Table1.png)
 {{< pagebreak >}}
-Figure 1
+
 ```{r, eval=T, fig.width=8.5, fig.height=12, output=T}
+#| fig-cap: "Figure 1: The average location within each narrative that a behavior/detail tends to appear across the whole corpus."
 p_Figure1
 ```
 
 {{< pagebreak >}}
-Figure 2
+
 ```{r, eval=T, fig.width=8.5, fig.height=12, output=T}
+#| fig-cap: "Figure 2: The predicted change in number or remaining events in the crisis as a function of time since each behavior/detail. Number of remaining events estimated with LightGBM, and out of sample expected change estimated as SHAP values."
 p_Figure2_bw
 ```
 
 {{< pagebreak >}}
-Figure 3
-```{r, eval=T, fig.width=14, fig.height=12, output=T}
+```{r, eval=T, fig.width=6.5*2.5, fig.height=6.5*2, output=T}
+#| fig-cap: "Figure 3: Predicted remaining events in each crisis at each time point. Out of sample predictions from the LightGBM model presented in Figure 2. Behavior/detail with the largest impact on the predicted number of remaining events shown at each step along with SHAP value in parentheses."
 print(p_Figure3)
 ```
 
 {{< pagebreak >}}
-Figure 4
 ```{r, eval=T, fig.width=12, fig.height=8.5, output=T}
+#| fig-cap: "Figure 4: Crises paths over time clustered into 6 archetypal shapes. Values are the out of sample predicted remaining number or events at each step within each crisis. Overall shape illustrates the path of the crisis, e.g. immediate steady resolution in cluster 1, resolution and then reversion in cluster 3, lengthy stair-step down toward resolution in cluster 6, etc."
 plot(p_Figure4) #Plot figure 4 here
 ```
